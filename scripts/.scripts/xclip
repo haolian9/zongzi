@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+
+import logging
+import os
+import sys
+
+
+def as_xsel_args():
+    """only supports xclip options that are used by pass, neovim
+
+    forms used by pass
+    * xclip -selection "$X_SELECTION"
+    * xclip -o -selection "$X_SELECTION"
+
+    forms used by neovim
+    * xclip -quiet -i -selection clipboard
+    """
+    argv = sys.argv
+
+    def pop_first():
+        try:
+            return argv.pop(0)
+        except IndexError:
+            raise RuntimeError("expects more args")
+
+    bin = pop_first()
+    if not bin.endswith("xclip"):
+        raise RuntimeError("unexpected bin")
+
+    while argv:
+        arg = pop_first()
+        if arg == "-o":
+            yield "--output"
+            continue
+
+        if arg == "-i":
+            yield "--input"
+            continue
+
+        if arg == "-selection":
+            sel = pop_first()
+            if sel == "clipboard":
+                yield "--clipboard"
+                continue
+            raise RuntimeError("unknown selection")
+
+        if arg == "-quiet":
+            continue
+
+        raise RuntimeError(f"unknown option: {arg}")
+
+
+def main():
+    logging.debug("argv: %s", sys.argv)
+    try:
+        args = list(as_xsel_args())
+    except RuntimeError:
+        logging.exception("failed to interpret argv")
+        raise SystemExit(1)
+    else:
+        logging.debug("interpreted xsel args: %s", args)
+        os.execvp("xsel", args)
+
+
+def _setup_mode(debug: bool):
+    logcfg = dict(style="{", datefmt="%Y-%m-%d %H:%M:%S", format="{asctime} {message}")
+
+    if debug:
+        logcfg["level"] = "DEBUG"
+        logcfg['handlers'] = [logging.FileHandler("/tmp/xclip.log", 'a')]
+    else:
+        logcfg["level"] = "INFO"
+
+    logging.basicConfig(**logcfg)
+
+
+if __name__ == "__main__":
+    _setup_mode(debug=False)
+    main()

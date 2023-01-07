@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+#
+# read manpage in nvim
+#
+
+# TODO@haoliang ensure man page exists before entering nvim
+
+set -e
+
+if [ -p /proc/self/fd/0 ]; then
+    # since stdin is a pipe,
+    # we copy self.stdin to nvim via exec
+    exec nvim -c ":Man!"
+else
+    /usr/bin/man "$@" | nvim -c ":Man!"
+fi

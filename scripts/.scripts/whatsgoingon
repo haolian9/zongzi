@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+UID=$(id -u)
+
+systemd-cgls --all --full --no-pager "/user.slice/user-${UID}.slice" | nvim -

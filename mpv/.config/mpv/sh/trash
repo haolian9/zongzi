@@ -1,0 +1,45 @@
+#!/usr/bin/env sh
+
+#
+# run: https://mpv.io/manual/master/#command-interface-subprocess
+#
+# pass property from mpv to scripts:
+# * ${=path} https://mpv.io/manual/master/#raw-and-formatted-properties
+# * property list: https://mpv.io/manual/master/#property-list
+
+logfile="/tmp/$(id -u)-mpv-scripts.log"
+
+log() {
+    echo "$@" >> "$logfile"
+}
+
+path="$1"
+if [ -z "$path" ]; then
+    log "no file provided"
+    return 1
+fi
+
+pid="$2"
+if [ -z "$pid" ]; then
+    log "no pid provided"
+    return 1
+fi
+
+trashdir="$(stat -c %m "$path")/umbra-trash" || {
+    log "trashdir stat failed; $trashdir"
+    return 1
+}
+
+if [ -d "$trashdir" ]; then
+    log "trashing $path to $trashdir"
+    mv --no-clobber "$path" "$trashdir/$(basename "$path")"
+else
+    log "trashdir not exists; $trashdir"
+    return 1
+fi
+
+# todo if there is a playerlist, do not exit
+# kill -SIGTERM "$pid" || {
+#     log "kill proc failed; $pid"
+#     return 1
+# }

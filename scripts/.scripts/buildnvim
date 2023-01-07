@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+
+"""
+see:
+* https://github.com/neovim/neovim/wiki/Building-Neovim
+* https://github.com/neovim/neovim/wiki/Installing-Neovim#install-from-source
+
+steps:
+* sudo pacman -S base-devel cmake unzip ninja tree-sitter curl
+* rm -r build/  # clear the CMake cache
+* make CMAKE_EXTRA_FLAGS="-DCMAKE_C_COMPILER=clang -DCLANG_ASAN_UBSAN=1 -DCMAKE_INSTALL_PREFIX=/opt/nvim-hal" CMAKE_BUILD_TYPE=Debug
+* make install
+"""
+
+import logging
+import os
+import shutil
+import subprocess
+from argparse import ArgumentParser
+from enum import Enum
+from pathlib import Path
+
+
+class BuildType(Enum):
+    Debug = "Debug"
+    Release = "Release"
+    Reldeb = "RelWithDebInfo"
+
+
+class Facts:
+    build_type = BuildType.Release
+    src_uri = "git@github.com:haolian9/neovim.git"
+    upstream_uri = "git@github.com:neovim/neovim.git"
+    src_dir = Path("/srv/playground/neovim")
+    src_branch = "hal"
+    install_dir = Path("/opt/nvim-hal")
+    bin_target = Path.home().joinpath("bin/nvim")
+    enable_sanitize = False
+
+
+def check_necessary_tools():
+    tools = ["cmake", "unzip", "ninja", "tree-sitter", "curl"]
+    missing = [t for t in tools if shutil.which(t) is None]
+    if missing:
+        raise SystemExit("missing necessary tools: {}".format(", ".join(missing)))
+
+
+def prepare_source_code(need_update):
+    def cur_branch():
+        cp = subprocess.run(["git", "branch", "--show-current"], cwd=Facts.src_dir, check=True, stdout=subprocess.PIPE)
+        return cp.stdout.rstrip().decode()
+
+    if not Facts.src_dir.exists():
+        subprocess.run(["git", "clone", Facts.src_uri, Facts.src_dir], check=True)
+
+    if not need_update:
+        return
+
+    if cur_branch() != Facts.src_branch:
+        subprocess.run(["git", "checkout", Facts.src_branch], cwd=Facts.src_dir, check=True)
+        subprocess.run(["git", "remote", "add", "upstream", Facts.upstream_uri], cwd=Facts.src_dir, check=True)
+
+    subprocess.run(["git", "fetch", "origin"], cwd=Facts.src_dir, check=True)
+    subprocess.run(["git", "fetch", "--tags", "--prune", "--prune-tags", "--force", "upstream"], cwd=Facts.src_dir, check=True)
+
+    # subprocess.run(["git", "reset", "--hard", f"origin/{Facts.src_branch}"], cwd=Facts.src_dir, check=True)
+    subprocess.run(["git", "merge", "--ff-only", f"origin/{Facts.src_branch}"], cwd=Facts.src_dir, check=True)
+
+
+def build(need_clean):
+    if need_clean:
+        try:
+            shutil.rmtree(Facts.src_dir.joinpath("build"), ignore_errors=False)
+        except FileNotFoundError:
+            pass
+
+    make_env = {
+        **os.environ,
+        "CMAKE_EXTRA_FLAGS": "-DCMAKE_C_COMPILER=clang -DCLANG_ASAN_UBSAN={:d} -DCMAKE_INSTALL_PREFIX='{}'".format(Facts.enable_sanitize, Facts.install_dir),
+        "CMAKE_BUILD_TYPE": Facts.build_type.value,
+    }
+    logging.info("make srcdir=%s, env: %s", Facts.src_dir, make_env)
+    nproc = os.cpu_count()
+    if nproc is None:
+        nproc = 1
+    subprocess.run(["make", "-j", str(nproc)], cwd=Facts.src_dir, env=make_env, check=True)
+
+    subprocess.run(["make", "install"], cwd=Facts.src_dir, check=True)
+
+
+def link():
+    bin_path = Facts.install_dir.joinpath("bin/nvim")
+    assert bin_path.exists()
+    bin_target = Facts.bin_target
+    bin_target.unlink(missing_ok=True)
+    Facts.bin_target.symlink_to(bin_path, False)
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--preflight", action="store_true")
+    parser.add_argument("--update", action="store_true")
+    parser.add_argument("--clean", action="store_true")
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    logging.info(
+        "facts:\n* uri=%s\n* build=%s\n* src=%s\n* branch=%s\n* install=%s\n* target=%s",
+        Facts.src_uri,
+        Facts.build_type,
+        Facts.src_dir,
+        Facts.src_branch,
+        Facts.install_dir,
+        Facts.bin_target,
+    )
+
+    if args.preflight:
+        check_necessary_tools()
+
+    prepare_source_code(args.update)
+    build(args.clean)
+    link()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()

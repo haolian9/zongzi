@@ -1,0 +1,15 @@
+
+source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+source ~/.p10k.zsh
+
+typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
+    dir
+    prompt_char
+)
+
+typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
+    status                  # exit code of the last command
+    command_execution_time  # duration of the last command
+    virtualenv              # python virtual environment (https://docs.python.org/3/library/venv.html)
+)

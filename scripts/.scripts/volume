@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+
+import argparse
+import os.path
+import subprocess
+
+
+class AlsaFlavor:
+    """
+    todo: master vs. headphone
+    """
+
+    scontrol = "Master"  # man amixer
+
+    @classmethod
+    def incr(cls, val: int):
+        assert val > 0
+        command = ["amixer", "sset", cls.scontrol, f"{val:d}%+"]
+        subprocess.run(command, check=True)
+
+    @classmethod
+    def decr(cls, val: int):
+        assert val > 0
+        command = ["amixer", "sset", cls.scontrol, f"{val:d}%-"]
+        subprocess.run(command, check=True)
+
+    @classmethod
+    def toggle(cls):
+        command = ["amixer", "sset", cls.scontrol, "toggle"]
+        subprocess.run(command, check=True)
+
+    @classmethod
+    def show(cls):
+        command = ["amixer", "sget", cls.scontrol]
+        subprocess.run(command, check=True)
+
+
+class PulseFlavor:
+    @classmethod
+    def incr(cls, val: int):
+        assert val > 0
+        command = ["ponymix", "increase", str(val)]
+        subprocess.run(command, check=True)
+
+    @classmethod
+    def decr(cls, val: int):
+        assert val > 0
+        command = ["ponymix", "decrease", str(val)]
+        subprocess.run(command, check=True)
+
+    @classmethod
+    def toggle(cls):
+        command = ["ponymix", "toggle"]
+        subprocess.run(command, check=True)
+
+    @staticmethod
+    def show():
+        command = ['ponymix']
+        subprocess.run(command, check=True)
+
+
+def _flavor():
+    if os.path.exists("/usr/bin/amixer"):
+        return AlsaFlavor
+
+    if os.path.exists("/usr/bin/ponymix"):
+        return PulseFlavor
+
+    raise SystemExit("unsupported sound system")
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser()
+    subpars = parser.add_subparsers(dest="op")
+
+    incr = subpars.add_parser("incr")
+    incr.add_argument("val", type=int)
+
+    decr = subpars.add_parser("decr")
+    decr.add_argument("val", type=int)
+
+    subpars.add_parser("toggle")
+    subpars.add_parser('show')
+
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = _parse_args()
+    flavor = _flavor()  # pylint: disable=invalid-name
+
+    if args.op == "incr":
+        flavor.incr(args.val)
+    elif args.op == "decr":
+        flavor.decr(args.val)
+    elif args.op == "toggle":
+        flavor.toggle()
+    elif args.op == "show":
+        flavor.show()
+    else:
+        raise SystemExit("unknown op")

@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+
+set -e
+
+tmpfile="/tmp/draft_$(date "+%Y%m%d_%H%M%S")"
+
+xsel -ob > "$tmpfile"
+mtime0=$(stat --format=%Y "$tmpfile")
+{
+    #urxvt -name clouds -e nvim "$tmpfile"
+    #alacritty --class clouds -e nvim "$tmpfile"
+    st -n clouds -e nvim "$tmpfile"
+}
+mtime1=$(stat --format=%Y "$tmpfile")
+
+if [ "$mtime0" -ne "$mtime1" ]; then
+    xsel -ib < "$tmpfile"
+    notify-send 'draft' 'copied into clipboard'
+else
+    notify-send 'draft' 'discarded'
+fi
+

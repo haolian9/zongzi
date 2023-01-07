@@ -1,0 +1,13 @@
+# vim
+*.un~
+.*.un~
+*.vim
+*.swp
+.netrwhist
+tags
+
+# vifm
+vifminfo
+vifminfo.json*
+
+/plugins/nvim

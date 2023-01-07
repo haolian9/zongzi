@@ -1,0 +1,168 @@
+mode "jumpto_workspace" {
+    bindsym 1 exec palantir jumpto 1
+    bindsym 2 exec palantir jumpto 2
+    bindsym 3 exec palantir jumpto 3
+    bindsym 4 exec palantir jumpto 4
+    bindsym 5 exec palantir jumpto 5
+    bindsym 6 exec palantir jumpto 6
+    bindsym 7 exec palantir jumpto 7
+    bindsym 8 exec palantir jumpto 8
+    bindsym 9 exec palantir jumpto 9
+    bindsym 0 exec palantir jumpto 0
+
+    bindsym a exec palantir jumpto a
+    bindsym b exec palantir jumpto b
+    bindsym c exec palantir jumpto c
+    bindsym d exec palantir jumpto d
+    bindsym e exec palantir jumpto e
+    bindsym f exec palantir jumpto f
+    bindsym g exec palantir jumpto g
+    bindsym h exec palantir jumpto h
+    bindsym i exec palantir jumpto i
+    bindsym j exec palantir jumpto j
+    bindsym k exec palantir jumpto k
+    bindsym l exec palantir jumpto l
+    bindsym m exec palantir jumpto m
+    bindsym n exec palantir jumpto n
+    bindsym o exec palantir jumpto o
+    bindsym p exec palantir jumpto p
+    bindsym q exec palantir jumpto q
+    bindsym r exec palantir jumpto r
+    bindsym s exec palantir jumpto s
+    bindsym t exec palantir jumpto t
+    bindsym u exec palantir jumpto u
+    bindsym v exec palantir jumpto v
+    bindsym w exec palantir jumpto w
+    bindsym x exec palantir jumpto x
+    bindsym y exec palantir jumpto y
+    bindsym z exec palantir jumpto z
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+mode "moveto_workspace" {
+    bindsym 1 exec palantir moveto 1
+    bindsym 2 exec palantir moveto 2
+    bindsym 3 exec palantir moveto 3
+    bindsym 4 exec palantir moveto 4
+    bindsym 5 exec palantir moveto 5
+    bindsym 6 exec palantir moveto 6
+    bindsym 7 exec palantir moveto 7
+    bindsym 8 exec palantir moveto 8
+    bindsym 9 exec palantir moveto 9
+    bindsym 0 exec palantir moveto 0
+
+    bindsym a exec palantir moveto a
+    bindsym b exec palantir moveto b
+    bindsym c exec palantir moveto c
+    bindsym d exec palantir moveto d
+    bindsym e exec palantir moveto e
+    bindsym f exec palantir moveto f
+    bindsym g exec palantir moveto g
+    bindsym h exec palantir moveto h
+    bindsym i exec palantir moveto i
+    bindsym j exec palantir moveto j
+    bindsym k exec palantir moveto k
+    bindsym l exec palantir moveto l
+    bindsym m exec palantir moveto m
+    bindsym n exec palantir moveto n
+    bindsym o exec palantir moveto o
+    bindsym p exec palantir moveto p
+    bindsym q exec palantir moveto q
+    bindsym r exec palantir moveto r
+    bindsym s exec palantir moveto s
+    bindsym t exec palantir moveto t
+    bindsym u exec palantir moveto u
+    bindsym v exec palantir moveto v
+    bindsym w exec palantir moveto w
+    bindsym x exec palantir moveto x
+    bindsym y exec palantir moveto y
+    bindsym z exec palantir moveto z
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+mode "resize_window" {
+
+    # width
+    bindsym h resize shrink width 1 px or 1 ppt
+    bindsym l resize grow width 1 px or 1 ppt
+
+    # height
+    bindsym k resize grow height 1 px or 1 ppt
+    bindsym j resize shrink height 1 px or 1 ppt
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+mode "markit" {
+
+    bindsym a exec i3-input -F 'mark %s' -P 'mark: ' && i3 mode "default"
+    bindsym d exec i3-input -F 'unmark %s' -P 'unmark: ' && i3 mode "default"
+    bindsym f exec i3-input -F '[con_mark="%s"] focus' -P 'focus: ' && i3 mode "default"
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+# like tmux's prefix key
+mode "wpwin_control" {
+    # modes
+    bindsym semicolon mode "jumpto_workspace"
+    bindsym j         mode "jumpto_workspace"
+    bindsym m         mode "moveto_workspace"
+    bindsym r         mode "resize_window"
+    bindsym g         mode "layout"
+
+    bindsym apostrophe floating toggle
+    bindsym f          fullscreen toggle
+    bindsym q          kill
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+mode "layout" {
+
+    ## split
+    bindsym backslash  split h
+    bindsym minus      split v
+    ## layout
+    bindsym s          layout stacking
+    bindsym t          layout tabbed
+    bindsym space      layout toggle
+    bindsym equal      layout toggle split
+    bindsym apostrophe floating toggle
+    ##  focus
+    bindsym h          focus left
+    bindsym j          focus down
+    bindsym k          focus up
+    bindsym l          focus right
+    bindsym i          focus parent
+    bindsym o          focus child
+
+    # compatible with default mode
+    ## split
+    bindsym $mod+backslash  split h
+    bindsym $mod+minus      split v
+    ## floating
+    bindsym $mod+apostrophe floating toggle
+    ## focus
+    bindsym $mod+h          focus left
+    bindsym $mod+j          focus down
+    bindsym $mod+k          focus up
+    bindsym $mod+l          focus right
+    bindsym $mod+i          focus parent
+    bindsym $mod+o          focus child
+    ## move
+    bindsym $mod+Ctrl+h     move left
+    bindsym $mod+Ctrl+j     move down
+    bindsym $mod+Ctrl+k     move up
+    bindsym $mod+Ctrl+l     move right
+
+    bindsym Return          mode "default"
+    bindsym Escape          mode "default"
+}

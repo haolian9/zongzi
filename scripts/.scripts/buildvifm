@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+
+"""
+see: https://github.com/vifm/vifm/blob/master/INSTALL
+
+steps:
+* ./configure --prefix=/opt/vifm-master --disable-desktop-files --without-X11 --without-dyn-X11 --disable-remote-cmds
+* make
+* install
+"""
+
+import logging
+import subprocess
+from argparse import ArgumentParser
+from pathlib import Path
+
+
+class Facts:
+    # upstream: "https://github.com/neovim/neovim"
+    src_uri = "https://github.com/haolian9/vifm"
+    src_branch = "hal"
+    src_dir = Path(f"/srv/pearl/vifm-{src_branch}")
+    install_dir = Path(f"/opt/vifm-{src_branch}")
+    bin_target = Path.home().joinpath("bin/vifm")
+
+
+def prepare_source_code():
+    def cur_branch():
+        cp = subprocess.run(["git", "branch", "--show-current"], cwd=Facts.src_dir, check=True, stdout=subprocess.PIPE)
+        return cp.stdout.rstrip().decode()
+
+    if not Facts.src_dir.exists():
+        subprocess.run(["git", "clone", Facts.src_uri, Facts.src_dir], check=True)
+        return
+
+    if cur_branch() != Facts.src_branch:
+        subprocess.run(["git", "checkout", "-b", Facts.src_branch, "--track", f"origin/{Facts.src_branch}"], cwd=Facts.src_dir, check=True)
+
+    subprocess.run(["git", "pull", "--ff-only", "origin", Facts.src_branch], cwd=Facts.src_dir, check=True)
+
+
+def build():
+    Facts.install_dir.mkdir(exist_ok=True)
+    subprocess.run(["./configure", f"--prefix={Facts.install_dir}", "--disable-desktop-files", "--without-X11", "--without-dyn-X11", "--disable-remote-cmds"], cwd=Facts.src_dir, check=True)
+    subprocess.run(["make"], cwd=Facts.src_dir, check=True)
+    subprocess.run(["make", "install"], cwd=Facts.src_dir, check=True)
+
+
+def link():
+    bin_path = Facts.install_dir.joinpath("bin/vifm")
+    assert bin_path.exists()
+    bin_target = Facts.bin_target
+    bin_target.unlink(missing_ok=True)
+    Facts.bin_target.symlink_to(bin_path, False)
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--no-update", action="store_true")
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    logging.info(
+        "facts:\n* uri=%s\n* src=%s\n* branch=%s\n* install=%s\n* target=%s",
+        Facts.src_uri,
+        Facts.src_dir,
+        Facts.src_branch,
+        Facts.install_dir,
+        Facts.bin_target,
+    )
+
+    if not args.no_update:
+        prepare_source_code()
+
+    build()
+    link()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()

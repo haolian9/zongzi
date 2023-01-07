@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+nvim_profiles=all exec nvim "$@"

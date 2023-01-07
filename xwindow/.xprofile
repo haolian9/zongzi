@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#
+# ~/.xprofile
+
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=\@im=fcitx
+
+if [ -f ~/.xprofile.local ]; then
+    source ~/.xprofile.local
+fi

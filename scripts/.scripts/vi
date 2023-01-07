@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+NVIM_PROFILES="${nvim_profiles:-mostbeloved,go,bash}" exec nvim "$@"

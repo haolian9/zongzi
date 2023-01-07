@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+
+"""
+settings:
+* run as vivaldi.service with resource limits
+* use proxy
+* enable hardware video acceleration
+
+todo:
+* do i need a ~/.config/systemd/user/vivaldi.service?
+"""
+
+import logging
+import os
+import subprocess
+from argparse import ArgumentParser
+from pathlib import Path
+from subprocess import PIPE
+
+
+class Facts:
+    bin = Path("/opt/vivaldi/vivaldi")
+    cpu_quota = 0.75
+    proxy = "socks://127.0.0.1:1080"
+    service = "vivaldi"
+
+
+def start():
+    def requires(*envs: str):
+        for var in envs:
+            try:
+                val = os.environ[var]
+            except KeyError:
+                raise SystemExit(f"missing env: {var}")
+            else:
+                yield var, val
+
+    if not Facts.bin.exists():
+        raise SystemExit("unable to find vivaldi bin")
+
+    cmd = [
+        # systemd-run
+        "systemd-run",
+        "--user",
+        "--unit={}".format(Facts.service),
+        # # properties
+        "--property",
+        # # # reserve 2 cpus
+        "CPUQuota={:.1%}".format(Facts.cpu_quota * max(os.cpu_count() - 2, 1)),
+        # vivaldi
+        str(Facts.bin),
+        # # proxy setting
+        "--proxy-server={}".format(Facts.proxy),
+        # # hardware video acceleration
+        "--use-gl=desktop",
+        "--enable-features=VaapiVideoDecoder",
+    ]
+
+    env = dict(
+        requires(
+            "DISPLAY",
+            "DBUS_SESSION_BUS_ADDRESS",
+            "XDG_RUNTIME_DIR",
+        )
+    )
+
+    os.execvpe(cmd[0], args=cmd, env=env)
+
+
+def stop():
+    """
+    is-active?
+    * active: stop
+    * failed: reset-failed
+    * inactive: never happen since it's transient
+    """
+
+    svc = "{}.service".format(Facts.service)
+
+    status_cp = subprocess.run(
+        ["systemctl", "--user", "is-active", svc], check=False, stdout=PIPE
+    )
+
+    status = status_cp.stdout.strip()
+
+    match status:
+        case b"active":
+            logging.debug("going to stop active service")
+            subprocess.run(["systemctl", "--user", "stop", svc], check=True)
+        case b"failed":
+            logging.debug("going to reset failed service")
+            subprocess.run(["systemctl", "--user", "reset-failed", svc], check=True)
+        case _:
+            raise SystemExit(f"unexpected status of {svc}: {status}")
+
+
+def main():
+    def parse_args():
+        parser = ArgumentParser()
+        parser.add_argument("op", choices=("start", "stop", 'restart'), nargs="?", default="start")
+
+        return parser.parse_args()
+
+    args = parse_args()
+
+    match args.op:
+        case "start":
+            start()
+        case "stop":
+            stop()
+        case _ as op:
+            raise SystemExit(f"unknown operation: {op}")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()

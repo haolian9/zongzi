@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+#
+# keep current pane only in a window
+#
+
+tmux list-panes -F "#{pane_id} #{pane_active}" | awk '$2 == 0 { print $1 }' | xargs -I {} tmux kill-pane -t {}

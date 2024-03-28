@@ -1,0 +1,85 @@
+
+[core]
+    editor = nvim
+    pager = delta
+
+[init]
+    defaultBranch = master
+
+[pager]
+    diff = delta
+    log = delta
+    reflog = delta
+    show = delta
+
+[delta]
+    features = side-by-side line-numbers decorations
+    whitespace-error-style = 22 reverse
+    syntax-theme = GitHub
+
+[delta "decorations"]
+    commit-decoration-style = bold yellow box ul
+    file-style = bold yellow ul
+    file-decoration-style = none
+
+[interactive]
+    diffFilter = delta --color-only
+
+[user]
+    name  = haoliang
+    email = haoliang0.1.2@gmail.com
+
+[alias]
+    br  = branch
+    co  = checkout
+    ci  = commit
+    st  = status
+    sb  = submodule
+    rt  = remote
+    rtv = remote --verbose
+    ft  = fetch
+    lg  = log --graph --decorate --all --pretty=format:'%C(red)%h%C(reset) %C(blue)%d%C(reset) %s'
+    df  = diff
+    dff = diff HEAD --name-only
+    root = rev-parse --show-toplevel
+
+[diff]
+    algorithm = histogram
+
+[merge]
+    tool = vimdiff
+    conflictstyle = zdiff3
+
+[color]
+    ui = always
+    grep = always
+    interactive = always
+
+[color "branch"]
+    current = red
+    local   = red
+    remote  = blue
+
+[gui]
+    fontui = -family \"Source Code Pro\" -size -12 -weight normal -slant roman -underline 0 -overstrike 0
+
+[mergetool]
+    prompt = false
+
+[rebase]
+    stat = true
+    autostash = true
+
+[pull]
+    rebase = true
+
+[status]
+    submodulesummary = true
+    short = false
+
+[log]
+    decorate = full
+    date = relative
+
+[stash]
+    showPath = true

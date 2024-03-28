@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+#
+# shortcut to create a executable shell script
+#
+
+logger() {
+    >&2 echo "[$(date '+%H:%M:%S')] $*"
+}
+
+template() {
+    local filename=${1:?requires filename}
+
+    cat <<EOF
+#!/usr/bin/env bash
+
+main() {
+    >&2 echo "TBD: $filename"
+    return 1
+}
+
+main "\$@"
+EOF
+}
+
+main() {
+    local script="${1:?requires script name}"
+
+    [ -f "$script" ] && {
+        logger "$script was already existed"
+        return 1
+    }
+
+    touch "$script" || {
+        logger "failed to create empty file: $script"
+        return 1
+    }
+
+    template "$script" > "$script" || {
+        logger "failed to fill file with template: $script"
+        return 1
+    }
+
+    chmod +x "$script" || {
+        logger "failed to grant executable permission: $script"
+        return 1
+    }
+}
+
+# todo
+# template ?
+
+main "$@"

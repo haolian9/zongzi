@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "pypacks"
+version = "0.2"
+description = ""
+authors = ["haoliang <haoliang0.1.2@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+# better batteries
+attrs = "*"
+trio = "*"
+psutil = "*"
+requests = "*"
+httpx = "*"
+hyperlink = "*"
+
+# formatter
+isort = "*"
+black = "*"
+
+[tool.poetry.dev-dependencies]
+
+[[tool.poetry.source]]
+name = 'tencent_mirror'
+url = 'http://mirrors.cloud.tencent.com/pypi/simple'
+default = true
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

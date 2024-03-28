@@ -1,0 +1,9 @@
+pub const playvideos_config: struct {
+    roots: []const []const u8,
+    suffixes: []const []const u8,
+    .player_num: u8 ,
+} = .{
+    .roots = &.{"/path/to/library/a", "/path/to/library/b"},
+    .suffixes = &.{ ".mp4", ".mkv" },
+    .player_num = 8,
+};

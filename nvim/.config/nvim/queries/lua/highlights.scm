@@ -1,0 +1,49 @@
+(comment) @comment
+(hash_bang_line) @comment
+
+(identifier) @variable
+(vararg_expression) @constant
+
+(field name: (identifier) @field)
+(dot_index_expression field: (identifier) @field)
+
+; keyword
+["return" "goto"] @keyword.return
+(break_statement) @keyword.return
+["and" "not" "or"] @keyword.operator
+(function_declaration ["function"] @keyword.function)
+(function_definition  ["function"] @keyword.function)
+"local" @type.qualifier
+["for" "while" "repeat" "until" "in"] @repeat
+["if" "else" "elseif"] @conditional
+[(false) (true)] @boolean
+
+; operator, punctuation
+["+" "-" "*" "/" "%"] @operator
+["==" "~=" "<=" ">=" "<" ">"] @operator
+["=" ".." "#"] @operator
+[";" ":" "," "." "end"] @punctuation.delimiter
+["(" ")" "[" "]"] @punctuation.bracket
+["do" "then" "end"] @punctuation.bracket
+(table_constructor ["{" "}"] @punctuation.bracket)
+
+; function
+(parameters (identifier) @parameter)
+(function_call name: (identifier) @function.call)
+(function_declaration name: (identifier) @function)
+(function_call name: (dot_index_expression field: (identifier) @function.call))
+(function_declaration name: (dot_index_expression field: (identifier) @function))
+(method_index_expression method: (identifier) @method)
+((function_call name: (identifier) @keyword.return) (#eq? @keyword.return "error") (#set! "priority" 101))
+
+; literal
+(label_statement) @label
+(number) @number
+(string) @string
+
+; builtin
+((identifier) @variable.builtin (#eq? @variable.builtin "self"))
+(nil) @constant.builtin
+
+; error
+(ERROR) @error

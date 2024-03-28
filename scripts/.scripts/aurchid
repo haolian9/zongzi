@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+
+
+import logging
+import subprocess
+from argparse import ArgumentParser
+from pathlib import Path
+from subprocess import PIPE
+from typing import Iterable
+
+
+class Filesystem:
+    aurdir = Path.home().joinpath("tmp", "aur")
+
+    aurdir.mkdir(exist_ok=True, parents=True)
+
+
+def _outdated_packages() -> Iterable[str]:
+    def parse(line: str):
+        """pattern: package installed-ver -> available-higher-ver"""
+        parts = line.split(" ")
+        assert len(parts) == 4
+        assert parts[2] == "->"
+
+        return parts[0]
+
+    cmd = ["auracle", "outdated", "--color=never"]
+    cp = subprocess.run(cmd, stdout=PIPE, check=True)
+    out: str = cp.stdout.rstrip().decode()
+    return (parse(line) for line in out.splitlines())
+
+
+def _clean_package(package: str):
+    """
+    another possible solution:
+        git ls-files . --exclude-standard --others | xargs rm
+    """
+    srcdir = Filesystem.aurdir.joinpath(package)
+
+    if not srcdir.exists():
+        return
+
+    logging.info("cleaning %s", package)
+    subprocess.run(("git", "clean", "-fX"), cwd=srcdir, check=True)
+    # TODO@haoliang git clean untracked files too
+
+
+def main():
+    def parse_args(args=None):
+        parser = ArgumentParser(description="helpers around auracle")
+        subpar = parser.add_subparsers(dest="op")
+        subpar.add_parser("clean", help="clean ignored files in outdated packages")
+
+        return parser.parse_args(args)
+
+    def clean():
+        for package in _outdated_packages():
+            _clean_package(package)
+
+    args = parse_args()
+
+    logging.info("aur dir: %s", Filesystem.aurdir)
+
+    if args.op == "clean":
+        clean()
+    else:
+        raise SystemExit("unknown op")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+
+    main()

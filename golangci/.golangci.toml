@@ -1,0 +1,8 @@
+# see full default configuration in:
+# https://golangci-lint.run/usage/configuration/#config-file
+
+
+[linters]
+    disable = [
+        'forbidgo', 'gochecknoglobals',
+    ]

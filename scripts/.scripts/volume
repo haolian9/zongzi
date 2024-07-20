@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+
+"""
+ref: https://wiki.archlinux.org/title/WirePlumber#Keyboard_volume_control
+
+volume range [0, 150]
+"""
+
+import subprocess
+import sys
+
+
+def main():
+    try:
+        cmd = sys.argv[1]
+    except IndexError:
+        # show current volume
+        cp = subprocess.run(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"], check=True, stdout=subprocess.PIPE)
+        prefix = "Volume: "
+        stdout = cp.stdout.decode()
+        assert stdout is not None and stdout.startswith(prefix)
+        vol = round(float(stdout[len(prefix) : -1]) * 100)
+        print("{}{}/150".format(prefix, vol))
+        return
+
+    # toggle mute
+    if cmd == "toggle":
+        subprocess.run(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"], check=True)
+        return
+
+    # volume increase
+    if cmd.startswith("+"):
+        decr = int(cmd[1:], 10)
+        subprocess.run(["wpctl", "set-volume", "-l", "1.5", "@DEFAULT_AUDIO_SINK@", f"{decr}%+"], check=True)
+        return
+
+    # volume decrease
+    if cmd.startswith("-"):
+        decr = int(cmd[1:], 10)
+        subprocess.run(["wpctl", "set-volume", "-l", "1.5", "@DEFAULT_AUDIO_SINK@", f"{decr}%-"], check=True)
+        return
+
+    # absolute volume
+    try:
+        vol = round(int(cmd, 10) / 100, 2)
+    except ValueError:
+        raise SystemExit("unsupported cmd")
+    else:
+        subprocess.run(["wpctl", "set-volume", "-l", "1.5", "@DEFAULT_AUDIO_SINK@", f"{vol}"], check=True)
+
+
+if __name__ == "__main__":
+    main()

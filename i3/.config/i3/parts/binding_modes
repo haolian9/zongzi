@@ -1,0 +1,104 @@
+mode "jumpto_workspace" {
+    bindsym 1 workspace 1
+    bindsym 2 workspace 2
+    bindsym 3 workspace 3
+    bindsym 4 workspace 4
+    bindsym 5 workspace 5
+    bindsym 6 workspace 6
+    bindsym 7 workspace 7
+    bindsym 8 workspace 8
+    bindsym 9 workspace 9
+    bindsym 0 workspace 0
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+mode "moveto_workspace" {
+    bindsym 1 move to workspace 1
+    bindsym 2 move to workspace 2
+    bindsym 3 move to workspace 3
+    bindsym 4 move to workspace 4
+    bindsym 5 move to workspace 5
+    bindsym 6 move to workspace 6
+    bindsym 7 move to workspace 7
+    bindsym 8 move to workspace 8
+    bindsym 9 move to workspace 9
+    bindsym 0 move to workspace 0
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+mode "resize_window" {
+
+    # width
+    bindsym h resize shrink width 1 px or 1 ppt
+    bindsym l resize grow width 1 px or 1 ppt
+
+    # height
+    bindsym k resize grow height 1 px or 1 ppt
+    bindsym j resize shrink height 1 px or 1 ppt
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+# like tmux's prefix key
+mode "wpwin_control" {
+    # modes
+    bindsym semicolon mode "jumpto_workspace"
+    bindsym j         mode "jumpto_workspace"
+    bindsym m         mode "moveto_workspace"
+    bindsym r         mode "resize_window"
+    bindsym g         mode "layout"
+
+    bindsym apostrophe floating toggle
+    bindsym f          fullscreen toggle
+    bindsym q          kill
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+mode "layout" {
+
+    ## split
+    bindsym backslash  split h
+    bindsym minus      split v
+    ## layout
+    bindsym s          layout stacking
+    bindsym t          layout tabbed
+    bindsym space      layout toggle
+    bindsym equal      layout toggle split
+    bindsym apostrophe floating toggle
+    ##  focus
+    bindsym h          focus left
+    bindsym j          focus down
+    bindsym k          focus up
+    bindsym l          focus right
+    bindsym i          focus parent
+    bindsym o          focus child
+
+    # compatible with default mode
+    ## split
+    bindsym $mod+backslash  split h
+    bindsym $mod+minus      split v
+    ## floating
+    bindsym $mod+apostrophe floating toggle
+    ## focus
+    bindsym $mod+h          focus left
+    bindsym $mod+j          focus down
+    bindsym $mod+k          focus up
+    bindsym $mod+l          focus right
+    bindsym $mod+i          focus parent
+    bindsym $mod+o          focus child
+    ## move
+    bindsym $mod+Ctrl+h     move left
+    bindsym $mod+Ctrl+j     move down
+    bindsym $mod+Ctrl+k     move up
+    bindsym $mod+Ctrl+l     move right
+
+    bindsym Return          mode "default"
+    bindsym Escape          mode "default"
+}

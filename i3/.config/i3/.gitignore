@@ -1,0 +1,7 @@
+/config
+/config.bak
+
+/parts/local
+/parts/local.*
+!/parts/local.example
+

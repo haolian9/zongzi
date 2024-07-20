@@ -1,0 +1,8 @@
+
+local-specific config
+
+* fcitx/profile
+* htop/htoprc
+* rofi/themes/default\_tweak.rasi window.width
+* .Xresources xcursor.size
+

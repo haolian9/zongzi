@@ -1,0 +1,46 @@
+#!/usr/bin/env sh
+
+#
+# tmux layout
+#
+
+layout_focus() {
+    # for `stty size : 80h 350w
+
+    # layout: (1|2)
+    tmux split-window -h -l 80
+
+    tmux select-pane -t :.1
+
+    # layout: 1-(2|3)
+    tmux split-window -v -b -l 10
+
+    # layout: (1|2)-(3|4)
+    tmux split-window -h
+
+    tmux select-pane -t :.3
+}
+
+untouched() {
+    test "$(tmux list-panes | wc -l)" -eq 1
+}
+
+main() {
+    untouched || {
+        >&2 echo "current window has been touched"
+        return 1
+    }
+
+    case "${1:-focus}" in
+    focus)
+        layout_focus
+        ;;
+    *)
+        >&2 echo "unknown layout"
+        return 1
+        ;;
+    esac
+}
+
+
+main "$@" && $SHELL -i

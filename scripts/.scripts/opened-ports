@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+ss --all --numeric --processes --ipv4 --ipv6

@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+
+
+import logging
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from functools import lru_cache
+from pathlib import Path
+from typing import Iterable
+
+description = """
+a dir is empty:
+* if it contains no file nor dir
+* if it contains empty dirs only
+"""
+
+
+def parse_args():
+    parser = ArgumentParser(
+        description=description,
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("root", nargs="?", default=".", help="default pwd")
+    parser.add_argument("-n", "--dryrun", action="store_true")
+    parser.add_argument("-r", "--rm-root", action="store_true")
+
+    return parser.parse_args()
+
+
+def find_empty_dirs(root: Path):
+    def _all_dirs(root: Path) -> Iterable[Path]:
+        """
+        order: inner -> outer
+        """
+        for file in root.iterdir():
+            if not file.is_dir():
+                continue
+            if file.name == "lost+found":
+                continue
+            yield from _all_dirs(file)
+        yield root
+
+    @lru_cache(maxsize=None)
+    def is_dir_empty(dir: Path):
+        for file in dir.iterdir():
+            if file.is_dir():
+                if not is_dir_empty(file):
+                    return False
+            else:
+                return False
+        return True
+
+    if not root.is_dir():
+        return
+
+    for dir in _all_dirs(root):
+        if is_dir_empty(dir):
+            yield dir
+
+
+def rm_empty_dirs(root: Path, rm_root: bool):
+    for dir in find_empty_dirs(root):
+        if not rm_root and dir == root:
+            continue
+
+        try:
+            dir.rmdir()
+        except PermissionError as e:
+            logging.warning("unable rm: %s; %r", dir, e)
+        else:
+            logging.info("rm %s", dir)
+
+
+def dryrun(root: Path):
+    logging.info("found empty dirs:")
+    for dir in find_empty_dirs(root):
+        logging.info("* %s", dir)
+
+
+def main():
+    args = parse_args()
+    root = Path(args.root).resolve()
+    if not root.is_dir():
+        raise SystemExit(f"invalid root: {root}")
+
+    if args.dryrun:
+        dryrun(root)
+    else:
+        rm_empty_dirs(root, args.rm_root)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+
+    main()

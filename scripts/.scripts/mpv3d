@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+set -e
+
+readonly ROOT="$(dirname "$(realpath "$0")")"
+readonly SCRIPT="${ROOT}/libs/vr-reversal/360plugin.lua"
+readonly OPTS="360plugin-enabled=yes"
+
+test -f "$SCRIPT"
+
+exec mpv --script="${SCRIPT}" --script-opts="${OPTS}" --no-config "$@"

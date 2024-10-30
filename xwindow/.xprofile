@@ -1,0 +1,10 @@
+#!/bin/sh
+
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=\@im=fcitx
+
+#200 milliseconds delay, 50 repeat rate
+xset r rate 200 50
+
+[ -f $HOME/.xprofile.local ] && source $HOME/.xprofile.local

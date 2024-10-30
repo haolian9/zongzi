@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+
+import logging
+import re
+import shutil
+import subprocess
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from os import fdopen, unlink
+from pathlib import Path
+from tempfile import mkstemp
+
+
+class Interpreter:
+    pattern = re.compile(r"^(?P<indent>\s*)include\s+(?P<include>.+)\s+$")
+
+    def __init__(self, mainfile: Path):
+        self.mainfile = mainfile
+        self.lookupdir = self.mainfile.parent
+
+    @classmethod
+    def from_fname(cls, fname: str):
+        file = Path(fname)
+        assert file.is_file()
+
+        return cls(file.resolve())
+
+    def __iter__(self):
+        return self._interpret(self.mainfile)
+
+    def _interpret(self, file: Path):
+        """
+        :raise: FileNotFound, PermissionError
+        """
+
+        # we assume config file should be small, lets say <= 32kb
+        with file.open("rt") as fp:
+            lines = fp.readlines()
+
+        pattern = self.pattern
+
+        for line in lines:
+            matched = pattern.match(line)
+            # support glob file name?
+            if matched:
+                indent = matched.group("indent")
+                include = matched.group("include")
+                yield from self._include(indent, include)
+            else:
+                yield line
+
+    def _include(self, indent: str, fname: str):
+        if "*" in fname:
+            raise RuntimeError("include glob is not supported yet!")
+
+        file = Path(fname)
+
+        if not file.is_absolute():
+            file = self.lookupdir.joinpath(file)
+
+        logging.info("including file: %s", file)
+
+        for line in self._interpret(file):
+            if line == "\n":
+                yield line
+            else:
+                yield indent + line
+
+
+def _parse_args():
+    desc = """
+implements `include` directive in i3 config file
+* if included-file is relative path, root will be argument main's parent
+
+this script assumes following layout as default:
+
+parts/
+    * main
+    * binding, ... whatever
+    * local # will be ignored in git repo
+    """
+
+    parser = ArgumentParser(description=desc, formatter_class=RawDescriptionHelpFormatter)
+
+    home = Path.home()
+    default_main = home.joinpath(".config", "i3", "parts", "main")
+    parser.add_argument("main", type=str, nargs="?", default=default_main)
+    default_out = home.joinpath(".config", "i3", "config")
+    parser.add_argument("out", type=str, nargs="?", default=default_out)
+
+    parser.add_argument("--no-backup", action="store_true")
+
+    return parser.parse_args()
+
+
+def main():
+    args = _parse_args()
+
+    mainfile = args.main
+    outfile = Path(args.out).resolve()
+
+    if not args.no_backup:
+        bakfile = outfile.parent.joinpath(outfile.name + ".bak")
+
+    tempfd, tempfname = mkstemp("wt")
+
+    try:
+        logging.info("stores in tempfile: %s", tempfname)
+        with fdopen(tempfd, "wt") as tempfp:
+            for line in Interpreter.from_fname(mainfile):
+                tempfp.write(line)
+
+        logging.info("checking final i3 config file validity")
+        subprocess.run(["i3", "-c", tempfname, "-C", "-V"], check=True)
+
+        if not args.no_backup:
+            logging.info("create backup %s", bakfile)
+            try:
+                shutil.move(outfile, bakfile)
+            except FileNotFoundError:
+                logging.warning("outfile not exist, no backup")
+
+        logging.info("moving tempfile to %s", outfile)
+        shutil.move(tempfname, outfile)
+    finally:
+        logging.info("deleting tempfile")
+        try:
+            unlink(tempfname)
+        except FileNotFoundError:
+            pass
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+
+    main()

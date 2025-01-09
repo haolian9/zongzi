@@ -1,0 +1,15 @@
+{
+    data = {
+        filePath = "/home/haoliang/scratch/hello.py",
+        funcParensDisabled = true,
+        position = {
+            character = 12,
+            line = 26
+        },
+        symbolLabel = "Path",
+        workspacePath = "/home/haoliang/scratch"
+    },
+    kind = 7,
+    label = "Path",
+    sortText = "09.9999.Path"
+}

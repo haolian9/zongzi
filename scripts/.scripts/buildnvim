@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+
+"""
+see:
+* https://github.com/neovim/neovim/wiki/Building-Neovim
+* https://github.com/neovim/neovim/wiki/Installing-Neovim#install-from-source
+
+steps:
+* sudo pacman -S base-devel cmake unzip ninja tree-sitter tree-sitter-cli curl
+* rm -r build/  # clear the CMake cache
+* make CMAKE_EXTRA_FLAGS="-DCMAKE_C_COMPILER=clang -DENABLE_ASAN_UBSAN=1 -DCMAKE_INSTALL_PREFIX=/opt/nvim-hal" CMAKE_BUILD_TYPE=Debug
+* make install
+"""
+
+import logging
+import os
+import shutil
+import subprocess
+from argparse import ArgumentParser
+from enum import Enum
+from pathlib import Path
+
+
+class BuildType(Enum):
+    Debug = "Debug"
+    Release = "Release"
+    Reldeb = "RelWithDebInfo"
+
+
+class Facts:
+    build_type = BuildType.Reldeb
+    repo_uri = "git@eugene:/srv/git/neovim.git"
+    upstream_uri = "git@github.com:neovim/neovim.git"
+    src_dir = Path("/srv/playground/neovim")
+    hals_dir = Path.home().joinpath(".config/nvim/lua/vim")
+    branch = "hal"
+    install_dir = Path("/opt/nvim-hal")
+    bin_file = Path.home().joinpath("bin/nvim")
+    enable_sanitize = False
+
+
+def check_necessary_tools():
+    tools = ["cmake", "unzip", "ninja", "tree-sitter", "curl"]
+    missing = [t for t in tools if shutil.which(t) is None]
+    if missing:
+        raise SystemExit("missing necessary tools: {}".format(", ".join(missing)))
+
+
+def prepare_source_code(need_update: bool):
+    def cur_branch():
+        cp = subprocess.run(["git", "branch", "--show-current"], cwd=Facts.src_dir, check=True, stdout=subprocess.PIPE)
+        return cp.stdout.rstrip().decode()
+
+    if not Facts.src_dir.exists():
+        subprocess.run(["git", "clone", "--branch", Facts.branch, Facts.repo_uri, Facts.src_dir], check=True)
+        subprocess.run(["git", "remote", "add", "upstream", Facts.upstream_uri], cwd=Facts.src_dir, check=True)
+        return
+
+    if not need_update:
+        return
+
+    cur_br = cur_branch()
+    if cur_br != Facts.branch:
+        raise SystemExit("currently in branch %s, expects %s", cur_br, Facts.branch)
+
+    subprocess.run(["git", "fetch", "origin"], cwd=Facts.src_dir, check=True)
+    subprocess.run(["git", "fetch", "--tags", "--prune", "--prune-tags", "--force", "upstream"], cwd=Facts.src_dir, check=True)
+
+    # # that's a dangerous operation
+    # subprocess.run(["git", "reset", "--hard", f"origin/{Facts.src_branch}"], cwd=Facts.src_dir, check=True)
+
+    subprocess.run(["git", "merge", "--ff-only", f"origin/{Facts.branch}"], cwd=Facts.src_dir, check=True)
+
+
+def halsruntime():
+    hrt = Facts.hals_dir
+    if not hrt.exists():
+        logging.info("no halsruntime/, skipped")
+        return
+
+    nrt = Facts.src_dir.joinpath("runtime/lua/vim")
+
+    def runtime_files(root: Path):
+        for ent in root.iterdir():
+            if ent.is_dir():
+                yield from runtime_files(ent)
+            elif ent.is_file():
+                yield ent
+            else:
+                raise RuntimeError("unreachable")
+
+    for src in runtime_files(hrt):
+        srcrel = src.relative_to(hrt)
+        logging.info("halsruntime: %s", srcrel)
+        dest = nrt.joinpath(srcrel)
+        shutil.copy(src, dest)
+
+
+def build(need_clean: bool):
+    def nproc():
+        nproc = os.cpu_count()
+        return str(1 if nproc is None else nproc)
+
+    if need_clean:
+        try:
+            shutil.rmtree(Facts.src_dir.joinpath("build"), ignore_errors=False)
+        except FileNotFoundError:
+            pass
+        subprocess.run(["make", "distclean"], cwd=Facts.src_dir, check=True)
+
+    make_env = {
+        **os.environ,
+        "CMAKE_EXTRA_FLAGS": "-DCMAKE_C_COMPILER=clang -DENABLE_ASAN_UBSAN={:d} -DCMAKE_INSTALL_PREFIX='{}'".format(Facts.enable_sanitize, Facts.install_dir),
+        "CMAKE_BUILD_TYPE": Facts.build_type.value,
+    }
+    logging.info("make srcdir=%s, env: %s", Facts.src_dir, make_env)
+    subprocess.run(["make", "-j", nproc()], cwd=Facts.src_dir, env=make_env, check=True)
+
+    subprocess.run(["make", "install"], cwd=Facts.src_dir, check=True)
+
+
+def link():
+    bin_src = Facts.install_dir.joinpath("bin/nvim")
+    assert bin_src.exists()
+    Facts.bin_file.unlink(missing_ok=True)
+    Facts.bin_file.symlink_to(bin_src, False)
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--preflight", action="store_true")
+    parser.add_argument("--update", action="store_true")
+    parser.add_argument("--clean", action="store_true")
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    logging.info(
+        "facts:\n* uri=%s\n* build=%s\n* src=%s\n* branch=%s\n* install=%s\n* target=%s",
+        Facts.repo_uri,
+        Facts.build_type,
+        Facts.src_dir,
+        Facts.branch,
+        Facts.install_dir,
+        Facts.bin_file,
+    )
+
+    if args.preflight:
+        check_necessary_tools()
+
+    prepare_source_code(args.update)
+    # halsruntime()
+    build(args.clean)
+    link()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()
+
+# vim: ft=python :

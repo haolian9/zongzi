@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+
+import logging
+import subprocess
+from argparse import ArgumentParser
+from subprocess import PIPE
+from typing import Iterable, Union
+
+from packaging.version import InvalidVersion, Version
+
+UpdateAvailable = tuple[str, Version, Version]
+
+
+def version_from_arch(version: str):
+    rest = version
+
+    try:
+        # epoch
+        _, rest = rest.split(":", 1)
+    except ValueError:
+        pass
+
+    try:
+        # release
+        rest, _ = rest.rsplit("-", 1)
+    except ValueError:
+        pass
+
+    # TODO@haoliang compatible with qt5-base 5.15.2+kde+r275-1
+    # TODO@haoliang compatible with linux 5.15.12.arch1-1
+
+    return Version(rest)
+
+
+def parse_lines(stdout: bytes) -> Iterable[UpdateAvailable]:
+    lines = stdout.decode().splitlines(keepends=False)
+
+    for line in lines:
+        if line.endswith(" [ignored]"):
+            line = line[: -len(" [ignored]")]
+
+        try:
+            package, _held, _, _update = line.split(" ")
+        except ValueError:
+            raise RuntimeError(f"unexpected line format: {line}")
+
+        try:
+            held = version_from_arch(_held)
+        except InvalidVersion:
+            logging.error("failed to parse %s: %s", package, _held)
+            continue
+
+        try:
+            update = version_from_arch(_update)
+        except InvalidVersion:
+            logging.error("failed to parse %s: %s", package, _update)
+            continue
+
+        yield package, held, update
+
+
+def is_big_bump(held: Version, update: Version) -> bool:
+    if held > update:
+        raise ValueError(f"expect `held < update`; {held}, {update}")
+
+    # 0.1.2 -> 0.2.0
+    # 3.9.2 -> 3.10.0
+    # 3.9.2 -> 4.0.0
+    if held.major < 0:
+        floor = Version("0.{}.0".format(held.minor + 1))
+    else:
+        floor = Version("{}.{}.0".format(held.major, held.minor + 1))
+
+    # floor = Version("0.0.1")
+
+    return update >= floor
+
+
+def styled_lines(lines: Iterable[UpdateAvailable]) -> Iterable[str]:
+    def black(text: Union[int, str]):
+        return "\x1B[30m{}\x1B[39".format(text)
+
+    def red(text: Union[int, str]):
+        return "\x1B[31m{}\x1B[39".format(text)
+
+    def gray(num: int):
+        return "\x1B[36m{}\x1B[39".format(num)
+
+    def bblack(text: Union[int, str]):
+        return "\x1B[1;30m{}\x1B[0m".format(text)
+
+    def _style_one(package: str, held: Version, update: Version):
+        yield bblack(package)
+
+        hi_major = held.major != update.major
+        hi_minor = held.minor != update.minor
+
+        # highlight y
+        yield "{}.{}.{}".format(
+            red(held.major) if hi_major else gray(held.major),
+            red(held.minor) if hi_minor else gray(held.minor),
+            gray(held.micro),
+        )
+        yield "{}.{}.{}".format(
+            bblack(update.major) if hi_major else black(update.major),
+            bblack(update.minor) if hi_minor else black(update.minor),
+            black(update.micro),
+        )
+
+    for package, held, update in lines:
+        if not is_big_bump(held, update):
+            continue
+
+        yield " ".join(_style_one(package, held, update))
+
+
+def parse_args():
+    ap = ArgumentParser()
+    ap.add_argument("-s", "--sync", help="pacman-Sy?")
+    return ap.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    if args.sync:
+        subprocess.run(["sudo", "-E", "pacman", "-Sy"], check=True)
+
+    cp = subprocess.run(["pacman", "-Qu"], stdout=PIPE, check=False)
+
+    # when no updates available, pacman will exit with 1
+    if cp.returncode != 0:
+        return
+
+    for line in styled_lines(parse_lines(cp.stdout)):
+        print(line)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        format="{message}",
+    )
+    main()
+
+# vim: ft=python :

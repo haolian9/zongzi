@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+ROOT=$(dirname "$(realpath "$0")")
+
+exec "$ROOT"/libs/ansi/ansi "$@"

@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+#
+# keep current pane only in a window
+#
+
+tmux kill-pane -a

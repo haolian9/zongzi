@@ -1,0 +1,102 @@
+#{{{ i3wm relevant
+
+bindsym $mod+shift+r restart
+bindsym $mod+shift+q exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
+
+# scratchpad, I love it!
+bindsym $mod+z move scratchpad
+bindsym $mod+v scratchpad show
+
+bindsym $mod+1 workspace 1
+bindsym $mod+2 workspace 2
+bindsym $mod+3 workspace 3
+bindsym $mod+4 workspace 4
+bindsym $mod+5 workspace 5
+bindsym $mod+6 workspace 6
+bindsym $mod+7 workspace 7
+bindsym $mod+8 workspace 8
+bindsym $mod+9 workspace 9
+
+# change focus
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+bindsym $mod+i focus parent
+bindsym $mod+o focus child
+
+bindsym $mod+grave   focus mode_toggle
+bindsym $mod+Tab     focus output next
+bindsym $mod+shift+n focus output next
+# todo: `prev` wont work here
+bindsym $mod+shift+p focus output next
+
+# move focused window
+bindsym $mod+ctrl+h move left
+bindsym $mod+ctrl+j move down
+bindsym $mod+ctrl+k move up
+bindsym $mod+ctrl+l move right
+
+# container/window management
+bindsym $mod+q kill
+
+# layout
+bindsym $mod+backslash  split h
+bindsym $mod+minus      split v
+bindsym $mod+s          layout stacking
+bindsym $mod+t          layout tabbed
+bindsym $mod+equal      layout toggle split
+bindsym $mod+apostrophe floating toggle
+
+# switch to workspace
+bindsym $mod+p workspace prev_on_output
+bindsym $mod+n workspace next_on_output
+## like vim: ctrl-^
+bindsym $mod+asciicircum workspace back_and_forth
+bindsym $mod+space       workspace back_and_forth
+
+# vim-like mark
+# font ref: https://wiki.archlinux.org/title/X_Logical_Font_Description
+bindsym $mod+ctrl+m          exec i3-input -F 'mark %s' -l 1 -P 'MARK: press a key' -f "-*-dejavu sans-bold-r-*-*-30-*-*-*-*-*-ascii-*"
+bindsym $mod+ctrl+apostrophe exec i3-input -F '[con_mark="%s"] focus' -l 1 -P 'FOCUS MARK: press a key' -f "-*-dejavu sans-bold-r-*-*-30-*-*-*-*-*-ascii-*"
+
+include binding_modes
+
+bindsym $mod+semicolon mode "jumpto_workspace"
+bindsym $mod+m         mode "moveto_workspace"
+bindsym $mod+r         mode "resize_window"
+bindsym $mod+g         mode "layout"
+
+#}}}
+
+#{{{ program
+
+# rofi
+bindsym $mod+slash  exec --no-startup-id rofi -show run
+bindsym $mod+Return exec --no-startup-id rofi -show plugin.entry -modi plugin.entry:~/.config/rofi/plugin_entry.sh
+bindsym $mod+comma  exec --no-startup-id ~/.scripts/pyman rofi
+
+# sound
+bindsym $mod+F3               exec ~/.scripts/volume +5
+bindsym $mod+F2               exec ~/.scripts/volume -5
+bindsym XF86AudioRaiseVolume  exec ~/.scripts/volume +5
+bindsym XF86AudioLowerVolume  exec ~/.scripts/volume -5
+bindsym $mod+F1               exec ~/.scripts/volume toggle
+# backlight
+bindsym $mod+F11              exec backlight -10
+bindsym $mod+F12              exec backlight +10
+bindsym XF86MonBrightnessDown exec backlight -10
+bindsym XF86MonBrightnessUp   exec backlight +10
+# eDP
+bindsym $mod+F8               exec xrandr --output eDP1 --auto
+bindsym $mod+F9               exec xrandr --output eDP1 --off
+# suspend
+bindsym $mod+Pause            exec systemctl suspend
+bindsym $mod+XF86Sleep        exec systemctl suspend
+
+# screenshot
+bindsym $mod+Print --release exec "~/.scripts/screenshot.sh"
+
+bindsym $mod+ctrl+0 exec xdotool mousemove 300 100
+
+#}}}

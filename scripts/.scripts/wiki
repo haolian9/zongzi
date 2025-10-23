@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+cd ~/vimwiki && NVIM_PROFILES="coding" exec nvim index.wiki

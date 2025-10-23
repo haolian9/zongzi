@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+file="$(rg --files --color=never --max-count 256 2>/dev/null | fzf)" || exit 1
+
+exec vi "$file"

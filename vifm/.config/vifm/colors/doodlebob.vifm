@@ -1,0 +1,80 @@
+" You can edit this file by hand.
+" The " character at the beginning of a line comments out the line.
+" Blank lines are ignored.
+
+" The Default color scheme is used for any directory that does not have
+" a specified scheme and for parts of user interface like menus. A
+" color scheme set for a base directory will also
+" be used for the sub directories.
+
+" The standard ncurses colors are:
+" Default = -1 = None, can be used for transparency or default color
+" Black   = 0
+" Red     = 1
+" Green   = 2
+" Yellow  = 3
+" Blue    = 4
+" Magenta = 5
+" Cyan    = 6
+" White   = 7
+
+" Light versions of colors are also available (set bold attribute):
+" LightBlack
+" LightRed
+" LightGreen
+" LightYellow
+" LightBlue
+" LightMagenta
+" LightCyan
+" LightWhite
+
+" Available attributes (some of them can be combined):
+" bold
+" underline
+" reverse or inverse
+" standout
+" none
+
+" Vifm supports 256 colors you can use color numbers 0-255
+" (requires properly set up terminal: set your TERM environment variable
+" (directly or using resources) to some color terminal name (e.g.
+" xterm-256color) from /usr/lib/terminfo/; you can check current number
+" of colors in your terminal with tput colors command)
+
+" highlight group cterm=attrs ctermfg=foreground_color ctermbg=background_color
+
+hi clear
+
+hi Win        ctermfg=8  ctermbg=15 cterm=none
+hi OtherWin   ctermfg=8  ctermbg=15 cterm=none
+
+hi TopLine    ctermfg=0  ctermbg=15 cterm=none
+hi TopLineSel ctermfg=8  ctermbg=15 cterm=bold
+
+hi TabLine    ctermfg=0  ctermbg=15 cterm=none
+hi TabLineSel ctermfg=8  ctermbg=15 cterm=bold
+
+hi JobLine    ctermfg=8  ctermbg=7  cterm=none
+hi StatusLine ctermfg=8  ctermbg=15 cterm=none
+hi Border     ctermfg=8  ctermbg=15 cterm=none
+
+hi CurrLine   ctermfg=15 ctermbg=1  cterm=bold
+hi OtherLine  ctermfg=8  ctermbg=7  cterm=bold
+hi LineNr     ctermfg=0  ctermbg=15 cterm=none
+
+hi Selected   ctermfg=5  ctermbg=15 cterm=none
+
+hi SuggestBox ctermfg=8  ctermbg=15 cterm=none
+hi WildMenu   ctermfg=8  ctermbg=15 cterm=none
+
+hi CmdLine    ctermfg=8  ctermbg=15 cterm=none
+hi ErrorMsg   ctermfg=1  ctermbg=15 cterm=none
+
+hi Directory  ctermfg=8  ctermbg=15 cterm=none
+hi Link       ctermfg=8  ctermbg=15 cterm=none
+hi BrokenLink ctermfg=8  ctermbg=15 cterm=none
+hi Socket     ctermfg=8  ctermbg=15 cterm=none
+hi Device     ctermfg=8  ctermbg=15 cterm=none
+hi Fifo       ctermfg=8  ctermbg=15 cterm=none
+hi Executable ctermfg=8  ctermbg=15 cterm=none
+

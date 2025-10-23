@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+
+import logging
+import pathlib
+import subprocess
+import sys
+from argparse import ArgumentParser
+from collections import namedtuple
+
+import attrs
+
+Facts = namedtuple("Facts", ("window_index", "active_pane_path"))
+
+
+@attrs.define
+class WindowWorkdir:
+    idx: int
+    key: str = attrs.field(init=False)
+    _workdir: str = attrs.field(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        self.key = "WINDOW_{}_WORKDIR".format(self.idx)
+
+    def get(self):
+        def get_from_env() -> str:
+            cp = subprocess.run(["tmux", "show-env", self.key], stdout=subprocess.PIPE, check=False)
+            logging.debug("show-env: %s %s", cp.returncode, cp.stdout)
+            # possible outputs:
+            # * unknown variable: WINDOW_WORKDIR
+            # * WINDOW_WORKDIR=4:/srv/playground/null-ls.nvim
+            if cp.returncode == 0:
+                prefix = "{}=".format(self.key).encode()
+                assert cp.stdout.startswith(prefix)
+                return cp.stdout[len(prefix) :].rstrip().decode()
+
+            return ""
+
+        if self._workdir is None:
+            self._workdir = get_from_env()
+
+        return self._workdir
+
+    def set(self, newdir: str):
+        if self._workdir is not None and self._workdir == newdir:
+            # already be set
+            return
+        subprocess.run(["tmux", "set-env", self.key, newdir], check=True)
+        logging.debug("set-env: %s %s", self.key, newdir)
+
+    def unset(self):
+        subprocess.run(["tmux", "set-env", "-u", self.key], check=True)
+        logging.debug("unset-env: %s", self.key)
+
+
+def path_as_window_name(facts: Facts):
+    window_name = pathlib.PurePosixPath(facts.active_pane_path).name
+    subprocess.run(["tmux", "rename-window", window_name], check=True)
+
+
+def gather_facts() -> Facts:
+    cp = subprocess.run(("tmux", "list-panes", "-F", "#{window_index} | #{pane_current_path}", "-f", "#{==:#{pane_active},1}"), stdout=subprocess.PIPE, check=True)
+    logging.debug("list-panes: %s %s", cp.returncode, cp.stdout)
+
+    line = cp.stdout.decode()
+    assert line.endswith("\n")
+    line = line[:-1]
+
+    window_index, active_pane_path = line.split(" | ", maxsplit=1)
+    return Facts(window_index, active_pane_path)
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("-u", "--unset-window-workdir", action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_true")
+
+    return parser.parse_args()
+
+
+def main(args):
+    facts = gather_facts()
+    logging.debug("gathered facts: %s", facts)
+
+    ww = WindowWorkdir(facts.window_index)
+
+    if args.unset_window_workdir:
+        ww.unset()
+    else:
+        ww.set(facts.active_pane_path)
+
+    path_as_window_name(facts)
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    if args.verbose:
+        logging.basicConfig(
+            level="DEBUG",
+            style="{",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            format="{asctime} {message}",
+            handlers=[logging.StreamHandler(stream=sys.stdout)],
+        )
+
+    main(args)
+
+# vim: ft=python :

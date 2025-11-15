@@ -1,0 +1,10 @@
+$include /etc/inputrc
+
+# vi like {{{
+set editing-mode vi
+set keymap vi-command
+set keymap vi-insert
+
+TAB: menu-complete
+"\e[Z": menu-complete-backward
+# }}}

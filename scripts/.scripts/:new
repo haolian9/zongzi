@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+#
+# create new tmux session
+#
+
+set -e
+
+as_session_name() {
+    local dir=${1:?requires dir param}
+
+    basename "$dir" | sed 's/[_ /.]/-/g'
+}
+
+main() {
+    local session
+    local workdir
+
+    # using current dir name
+    if [ $# -eq 0 ]; then
+        workdir="$(pwd)"
+        session=$(as_session_name "$workdir")
+    else
+        # using given dir name
+        if [ -d "$1" ]; then
+            workdir="$(realpath "$1")"
+            session=$(as_session_name "${2:-$workdir}")
+        else # using given session name and current dir
+            session="$(as_session_name "$1")"
+            workdir="$(pwd)"
+        fi
+    fi
+
+    tmux new-session -e "BGMODE=${BGMODE:-light}" -c "$workdir" -d -s "$session"
+
+    if [ -z "$TMUX" ]; then
+        exec tmux attach-session -t "$session"
+    else
+        exec tmux switch-client -t "$session"
+    fi
+}
+
+main "$@"
+
+# vim: ft=bash

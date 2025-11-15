@@ -1,0 +1,44 @@
+# see https://github.com/PyCQA/pylint/blob/master/pylintrc
+
+[master]
+extension-pkg-allow-list=orjson
+
+
+[MESSAGES CONTROL]
+# see `$ pylint --list-msgs-enabled`
+disable=
+    redefined-builtin,
+    global-statement,
+    missing-docstring,
+    protected-access,
+    too-few-public-methods,
+    fixme,
+    redefined-outer-name,
+    format, # black
+    bad-continuation, # black
+    wrong-import-order, # isort
+    ungrouped-imports, # isort
+    import-error,
+    consider-using-f-string,
+    consider-using-from-import,
+    raise-missing-from
+
+
+[REPORTS]
+output-format=colorized
+
+[FORMAT]
+max-line-length=100
+
+[BASIC]
+good-names=_,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,
+           fp,db,id
+
+variable-rgx=[a-z_][a-z0-9_]{1,30}$
+variable-name-hint=[a-z_][a-z0-9_]{1,30}$
+argument-rgx=[a-z_][a-z0-9_]{1,30}$
+argument-name-hint=[a-z_][a-z0-9_]{1,30}$
+
+[DESIGN]
+# NB: collections.UserDict have 7 parents
+max-parents=10

@@ -1,0 +1,43 @@
+# see default /usr/share/rime-data/build/luna_pinyin_simp.schema.yaml
+
+patch:
+
+  "menu/page_size": 9
+
+  # 1: 输入ascii字符
+  "switches/@0/reset": 1
+
+  "engine/processors":
+    - lua_processor@*vimode
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+
+  # meant to overwrite this list option
+  "key_binder/bindings":
+
+    # selection
+    - {accept: "Alt+h", send: Left, when: composing}
+    - {accept: "Alt+l", send: Right, when: composing}
+    - {accept: "Control+a", send: Home, when: composing}
+    - {accept: "Control+e", send: End, when: composing}
+    - {accept: Tab, send: "Shift+Right", when: composing}
+    ## pagination
+    - {accept: minus, send: Page_Up, when: has_menu}
+    - {accept: equal, send: Page_Down, when: has_menu}
+    - {accept: comma, send: Page_Up, when: paging}
+    - {accept: period, send: Page_Down, when: has_menu}
+
+    # input
+    - {accept: "Control+l", send: Delete, when: composing}
+    - {accept: "Control+h", send: BackSpace, when: composing}
+    ## delete all input
+    - {accept: "Control+u", send: Escape, when: composing}
+
+    # 删除词组
+    - {accept: "Control+k", send: "Shift+Delete", when: composing}

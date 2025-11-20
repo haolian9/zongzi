@@ -1,0 +1,9 @@
+#!/usr/bin/sh
+
+# usage: `git logmycommits hal-0.10`
+#
+# see: https://stackoverflow.com/a/39586986
+
+exec git log --author haoliang --oneline --first-parent "$@"
+
+# vim: ft=bash :

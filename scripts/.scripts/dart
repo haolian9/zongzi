@@ -1,0 +1,12 @@
+#!/bin/sh
+
+export SHELL=/usr/bin/fish
+export BGMODE=dark
+
+# exec /usr/bin/ghostty \
+#     --config-file=$HOME/.config/ghostty/dark \
+#     "$@"
+
+exec /usr/bin/alacritty \
+    --config-file ~/.config/alacritty/dark.toml \
+    "$@"

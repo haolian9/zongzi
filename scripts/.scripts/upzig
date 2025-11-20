@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+
+"""
+prerequisites:
+* requests
+* aria2c
+* writable /opt, /tmp, ~/bin
+"""
+
+import datetime
+import logging
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+import attrs
+import requests
+
+
+def conv_date(plain: str):
+    return datetime.datetime.strptime(plain, "%Y-%m-%d").date()
+
+
+@attrs.define
+class Resource:
+    tarball: str
+    shasum: str
+    size: str = attrs.field(converter=int)
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        match data:
+            case {"tarball": tarball, "shasum": shasum, "size": size}:
+                return cls(tarball, shasum, size)
+            case _:
+                raise ValueError("invalid format for Resource")
+
+    def optdir(self, basename):
+        return Filesystem.opt.joinpath(basename)
+
+
+@attrs.define
+class Release:
+    version: str
+    date: datetime.date = attrs.field(converter=conv_date)
+    linux64: Resource
+
+    @classmethod
+    def from_dict(cls, branch: str, data: dict):
+        match data:
+            case {"version": version, "date": date, "x86_64-linux": linux64}:
+                return cls(version, date, Resource.from_dict(linux64))
+            case {"date": date, "x86_64-linux": linux64}:
+                return cls(branch, date, Resource.from_dict(linux64))
+            case _:
+                raise ValueError("invalid format")
+
+
+class Facts:
+    zls_release = "0.13.0"
+
+
+class Filesystem:
+    opt = Path("/opt")
+    tmp = Path("/tmp")
+    zls = Path("/srv/playground/zls")
+    userbin = Path.home().joinpath("bin")
+
+
+def main():
+    def get_release(branch: str):
+        resp = requests.get("https://ziglang.org/download/index.json")
+        try:
+            release = Release.from_dict(branch, resp.json()[branch])
+        except (KeyError, ValueError) as e:
+            raise SystemExit(repr(e))
+        else:
+            logging.info("zig release: %r", release)
+            return release
+
+    def download(r: Resource, optdir: Path):
+        if optdir.exists():
+            # prevent re-downloading
+            return
+        full_basename = r.tarball[r.tarball.rfind("/") + 1 :]
+        assert full_basename.startswith(optdir.name)
+        subprocess.run(
+            ["aria2c", "--continue", "-x", "3", r.tarball],
+            cwd=Filesystem.tmp,
+            check=True,
+        )
+        logging.info("downloaded %s", r.tarball)
+        subprocess.run(
+            ["tar", "xf", Filesystem.tmp.joinpath(full_basename)],
+            cwd=optdir.parent,
+            check=True,
+        )
+        assert optdir.exists(), f"{optdir} un-tar failed"
+        logging.info("extracted as %s", optdir)
+
+    def link(optdir: Path):
+        bin = optdir.joinpath("zig")
+        assert bin.exists(), f"{bin} should exists"
+        target = Filesystem.userbin.joinpath("zig")
+        logging.info("linking %s to %s", bin, target)
+        target.unlink(missing_ok=True)
+        target.symlink_to(bin, False)
+
+    def cleanup(optdir: Path):
+        latest = optdir.name
+        for dir in optdir.parent.iterdir():
+            name = dir.name
+            if not name.startswith("zig-linux-x86_64"):
+                continue
+            if name == latest:
+                continue
+            logging.info("rm old version: %s", dir)
+            shutil.rmtree(dir, ignore_errors=False)
+
+    master = get_release(Facts.zls_release)
+    basename = "zig-{}-{}".format("linux-x86_64", master.version)
+    optdir = Filesystem.opt.joinpath(basename)
+
+    download(master.linux64, optdir)
+    link(optdir)
+    cleanup(optdir)
+
+
+def check_proxy():
+    match os.environ:
+        case {"http_proxy": http, "https_proxy": https}:
+            logging.info("using proxy: http=%s, https=%s", http, https)
+        case _:
+            logging.info("not using any proxy")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level="DEBUG", style="{", datefmt="%Y-%m-%d %H:%M:%S", format="{asctime} {message}")
+
+    check_proxy()
+    main()
+
+
+# vim: ft=python :

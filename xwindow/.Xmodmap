@@ -1,0 +1,8 @@
+! more keys in `xmodmap -pke`
+
+! 135 Menu
+keycode 135 = Super_R
+
+! 66 Caps_Lock
+clear lock
+keycode 66 = Control_L

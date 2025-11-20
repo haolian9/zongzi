@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+
+"""
+horizontal/vertical is soooooo confusing, so we use above/below/left/right instead
+
+see: https://github.com/tmux/tmux/issues/213
+"""
+
+import argparse
+import logging
+import os
+import subprocess
+import sys
+
+import attrs
+
+
+@attrs.define
+class WindowWorkdir:
+    idx: int
+    key: str = attrs.field(init=False)
+    _workdir: str = attrs.field(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        self.key = "WINDOW_{}_WORKDIR".format(self.idx)
+
+    def get(self):
+        def get_from_env() -> str:
+            cp = subprocess.run(["tmux", "show-env", self.key], stdout=subprocess.PIPE, check=False)
+            logging.debug("show-env: %s %s", cp.returncode, cp.stdout)
+            # possible outputs:
+            # * unknown variable: WINDOW_WORKDIR
+            # * WINDOW_WORKDIR=4:/srv/playground/null-ls.nvim
+            if cp.returncode == 0:
+                prefix = "{}=".format(self.key).encode()
+                assert cp.stdout.startswith(prefix)
+                return cp.stdout[len(prefix) :].rstrip().decode()
+
+            return ""
+
+        if self._workdir is None:
+            self._workdir = get_from_env()
+
+        return self._workdir
+
+    def set(self, newdir: str):
+        if self._workdir is not None and self._workdir == newdir:
+            # already be set
+            return
+        subprocess.run(["tmux", "set-env", self.key, newdir], check=True)
+        logging.debug("set-env: %s %s", self.key, newdir)
+
+    def unset(self):
+        subprocess.run(["tmux", "set-env", "-u", self.key], check=True)
+        logging.debug("unset-env: %s", self.key)
+
+
+def gather_pane_dimension():
+    """
+    note: tput returns incorrect value in tmux.run-shell
+    """
+
+    cp = subprocess.run(["tmux", "list-panes", "-F", "#{pane_width} #{pane_height}", "-f", "#{==:#{pane_active},1}"], check=True, stdout=subprocess.PIPE)
+
+    line = cp.stdout.decode()
+    assert line.endswith("\n")
+    line = line[:-1]
+
+    return map(int, line.split(" "))
+
+
+def split_pane(percentile: float, where: str, keep_focus: bool, workdir: str | None):
+    assert percentile < 1, "percentile should be less than 1"
+    assert where in {"above", "below", "left", "right"}, "unknown where"
+
+    if where in {"above", "below"}:
+        _, panesize = gather_pane_dimension()
+    else:
+        panesize, _ = gather_pane_dimension()
+
+    splitsize = int(panesize * percentile)
+    if splitsize < 1:
+        raise SystemExit("insufficient length to split another window")
+
+    splitcmd = ["tmux", "split-window", "-l", str(splitsize)]
+
+    if where in {"above", "below"}:
+        splitcmd.append("-v")
+    else:
+        splitcmd.append("-h")
+
+    if where in {"above", "left"}:
+        splitcmd.append("-b")
+
+    if keep_focus:
+        splitcmd.append("-d")
+
+    if workdir is not None:
+        splitcmd.extend(("-c", workdir))
+
+    subprocess.run(splitcmd, check=True)
+
+
+def resolve_window_workdir():
+    def resolve_index():
+        cp = subprocess.run(["tmux", "list-windows", "-F", "#{window_index}", "-f", "#{==:#{window_active},1}"], stdout=subprocess.PIPE, check=True)
+
+        line = cp.stdout.decode()
+        assert line.endswith("\n")
+        line = line[:-1]
+
+        return int(line)
+
+    ww = WindowWorkdir(resolve_index())
+
+    return ww.get()
+
+
+def parse_args(_args=None):
+    par = argparse.ArgumentParser()
+    par.add_argument("where", type=str, help="split in where: above, below, left, right")
+    par.add_argument(
+        "percentile",
+        nargs="?",
+        type=float,
+        default=0.5,
+        help="new pane will take n percent space",
+    )
+    par.add_argument("-f", "--focus-follow", action="store_true", help="focus on new pane?")
+    par.add_argument("-v", "--verbose", action="store_true")
+
+    return par.parse_args(_args)
+
+
+gowhere = {
+    "above": "above",
+    "up": "above",
+    "top": "above",
+    "below": "below",
+    "down": "below",
+    "left": "left",
+    "right": "right",
+    "k": "above",
+    "j": "below",
+    "h": "left",
+    "l": "right",
+}
+
+
+def main(args):
+    if "TMUX" not in os.environ:
+        raise SystemExit("should run in tmux session")
+
+    try:
+        where = gowhere[args.where]
+    except KeyError:
+        parse_args(["-h"])
+        return
+
+    workdir = resolve_window_workdir()
+    logging.debug("workdir %s", workdir)
+
+    try:
+        split_pane(args.percentile, where, not args.focus_follow, workdir)
+    except (AssertionError, subprocess.CalledProcessError) as e:
+        raise SystemExit(repr(e))
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    if args.verbose:
+        logging.basicConfig(
+            level="DEBUG",
+            style="{",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            format="{asctime} {message}",
+            handlers=[logging.StreamHandler(stream=sys.stdout)],
+        )
+
+    main(args)
+
+# vim: ft=python :

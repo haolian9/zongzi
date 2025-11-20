@@ -1,0 +1,19 @@
+background-opacity      =  1
+cursor-opacity          =  1
+cursor-style-blink      =  false
+gtk-single-instance     =  false
+linux-cgroup            =  single-instance
+mouse-hide-while-typing =  true
+mouse-scroll-multiplier =  0.5
+scrollback-limit        =  8388608 
+shell-integration       =  fish
+window-save-state       =  never
+
+# no window-theme auto changing
+#gtk-adwaita             =  false
+
+# no all decorations
+window-decoration = false
+gtk-titlebar      = false
+
+keybind = shift+ctrl+r=reload_config

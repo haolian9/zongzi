@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+set -e
+
+tmpfile="/tmp/draft_$(date "+%Y%m%d_%H%M%S")"
+
+notify() {
+    notify-send 'draft' "$*"
+}
+
+xsel -ob > "$tmpfile"
+mtime0=$(stat --format=%Y "$tmpfile")
+{
+    #urxvt -name clouds -e ni "$tmpfile"
+    st -n clouds -e ni "$tmpfile"
+}
+mtime1=$(stat --format=%Y "$tmpfile")
+
+if [ $mtime1 -gt $mtime0 ]; then
+    xsel -ib < "$tmpfile"
+    notify copied to clipboard
+else
+    notify no change
+fi
+

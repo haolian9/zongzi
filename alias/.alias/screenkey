@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+# W*H[+-]X[+-]Y
+# which is relatived to
+# * screen size
+# * position
+# * +-n
+# * n%
+
+# geometry="20%x5%+80%+40%"
+geometry="20%x5%+80%+80%"
+
+/usr/bin/screenkey \
+    --font-size large \
+    --key-mode raw \
+    --font "Monego" \
+    --opacity 0.5 \
+    --position fixed \
+    --geometry "$geometry"

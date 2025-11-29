@@ -1,0 +1,18 @@
+# see default /usr/share/rime-data/default.yaml
+#
+patch:
+
+  schema_list:
+    - schema: double_pinyin
+    - schema: luna_pinyin_simp
+
+  "switcher/hotkeys":
+    - "Control+F8"
+
+  "switcher/save_options":
+    - full_shape
+    - ascii_punct
+    - simplification
+    - extended_charset
+    # - zh_hant
+    # - zh_hans

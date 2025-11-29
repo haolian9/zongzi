@@ -1,0 +1,39 @@
+{
+    detail = "const Dir = struct",
+    insertText = "Dir",
+    insertTextFormat = 1,
+    kind = 21,
+    label = "Dir",
+    sortText = "1_Dir"
+}
+
+{ 
+    detail = 'const fs = @import("fs.zig")',
+    insertText = "fs",
+    insertTextFormat = 1,
+    kind = 21,
+    label = "fs",
+    sortText = "1_fs"
+}
+
+{
+    detail = 'const os = @import("os.zig")',
+    documentation = {
+        kind = "plaintext",
+        value = ' This file contains thin wrappers around OS-specific APIs, with these\n specific goals in mind:\n * Convert "errno"-style error codes into Zig errors.\n * When null-terminated byte buffers are required, provide APIs which accept\n   slices as well as APIs which accept null-terminated byte buffers. Same goes\n   for UTF-16LE encoding.\n * Where operating systems share APIs, e.g. POSIX, these thin wrappers provide\n   cross platform abstracting.\n * When there exists a corresponding libc function and linking libc, the libc\n   implementation is used. Exceptions are made for known buggy areas of libc.\n   On Linux libc can be side-stepped by using `std.os.linux` directly.\n * For Windows, this file represents the API that libc would provide for\n   Windows. For thin wrappers around Windows-specific APIs, see `std.os.windows`.\n Note: The Zig standard library does not support POSIX thread cancellation, and\n in general EINTR is handled by trying again.'
+    },
+    insertText = "os",
+    insertTextFormat = 1,
+    kind = 21,
+    label = "os",
+    sortText = "1_os"
+}
+
+{
+    detail = "const O = switch (builtin.os.tag) {\n    // We want to expose the POSIX-like OFLAGS, so we use std.c.wasi.O instead\n    // of std.os.wasi.O, which is for non-POSIX-like `wasi.path_open`, etc.\n    .wasi => std.c.O,\n    else => system.O,\n}",
+    insertText = "O",
+    insertTextFormat = 1,
+    kind = 21,
+    label = "O",
+    sortText = "1_O"
+}

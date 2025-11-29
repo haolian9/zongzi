@@ -1,0 +1,3 @@
+#!/usr/bin/sh
+
+NVIM_PROFILES=editing exec nvim --luamod-dev "$@"

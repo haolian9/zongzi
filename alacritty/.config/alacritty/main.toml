@@ -1,0 +1,71 @@
+[env]
+SHELL = "/usr/bin/fish"
+
+# CSIu - https://www.leonerd.org.uk/hacks/fixterms/
+
+    [[keyboard.bindings]]
+        key   = "Return"
+        mods  = "Shift"
+        chars = "\u001B[13;2u"
+
+    [[keyboard.bindings]]
+        key   = "Return"
+        mods  = "Control"
+        chars = "\u001B[13;5u"
+
+    [[keyboard.bindings]]
+        key   = "Slash"
+        mods  = "Control"
+        chars = "\u001B[47;5u"
+
+    [[keyboard.bindings]]
+        key   = "0"
+        mods  = "Control"
+        chars = "\u001B[48;5u"
+
+    [[keyboard.bindings]]
+        key   = "9"
+        mods  = "Control"
+        chars = "\u001B[57;5u"
+
+    # todo: it does not have effect!
+    [[keyboard.bindings]]
+        key   = "i"
+        mods  = "Control"
+        chars = "\u001B[105;5u"
+
+# behavior
+    [general]
+    live_config_reload = false
+
+    [scrolling]
+    history = 1000
+    multiplier = 3
+
+    [selection]
+    save_to_clipboard = false
+    semantic_escape_chars = ",│`|:\"' ()[]{}<>"
+
+# ui
+
+    [cursor]
+    style = "Block"
+    unfocused_hollow = true
+
+    [mouse]
+    hide_when_typing = true
+
+    [bell]
+    animation = "EaseOutExpo"
+
+    [window]
+    decorations = "none"
+    dynamic_title = true
+
+    [window.dimensions]
+    columns = 0
+    lines = 0
+
+    [window.padding]
+    x = 0
+    y = 0

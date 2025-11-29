@@ -1,0 +1,65 @@
+URxvt.depth: 32
+URxvt.buffered: true
+URxvt.loginShell: false
+URxvt.preeditType: Root
+URxvt.inputMethod: fcitx
+
+!! the following mode will enable ctrl-shift-* keybinds which i have no use of.
+URxvt.iso14755: false
+URxvt.iso14755_52: false
+
+URxvt.font: xft:3270 Nerd Font Mono:size=24:style=Regular
+
+URxvt.scrollBar: false
+URxvt.internalBorder: 3
+URxvt.geometry:    90x30
+URxvt.letterSpace: -1
+URxvt.lineSpace:   3
+URxvt.transparent: false
+
+!! nvim compatible
+!!! csi-u:
+!!! * ctrl -> 5, shift -> 2
+!!! * codepoint, ascii table, decimal
+URxvt.keysym.Home:       \033[1~
+URxvt.keysym.End:        \033[4~
+URxvt.keysym.C-quotedbl: \033[39;5u
+URxvt.keysym.C-0:        \033[48;5u
+URxvt.keysym.C-9:        \033[57;5u
+URxvt.keysym.C-slash:    \033[47;5u
+URxvt.keysym.S-Return:   \033[13;2u
+URxvt.keysym.C-Return:   \033[13;5u
+
+!! my prefered keybind for pasting from system clipboard
+URxvt.keysym.Control-Shift-V: eval:paste_clipboard
+
+URxvt.cursorBlink:     false
+URxvt.cursorUnderline: false
+
+URxvt.cursorColor: #ff1cac
+URxvt.background:  0
+URxvt.foreground:  15
+!! black
+URxvt.color0:  #073642
+URxvt.color8:  #002b36
+!! red
+URxvt.color1:  #dc322f
+URxvt.color9:  #cb4b16
+!! green
+URxvt.color2:  #859900
+URxvt.color10: #586e75
+!! yellow
+URxvt.color3:  #b58900
+URxvt.color11: #657b83
+!! blue
+URxvt.color4:  #268bd2
+URxvt.color12: #839496
+!! magenta
+URxvt.color5:  #d33682
+URxvt.color13: #6c71c4
+!! cyan
+URxvt.color6:  #2aa198
+URxvt.color14: #93a1a1
+!! white
+URxvt.color7:  #eee8d5
+URxvt.color15: #fdf6e3

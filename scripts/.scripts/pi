@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+
+# runtime env:
+# * prefer poetry env first
+# * then venv
+
+# root:
+# * prefer dirname(pyproject.toml) first
+# * then git rev-parse --top-level
+
+# usecase:
+# * `cd $project_root && pynvim`
+
+main() {
+
+    local poetry_available
+    local venv_available
+    local project_root
+    local git_root
+
+    export NVIM_PROFILES="coding"
+
+    if [ -f pyproject.toml ]; then
+        poetry_available="true"
+        project_root="${PWD}"
+    elif [ -f requirements.txt ]; then
+        venv_available="true"
+        project_root="${PWD}"
+    elif [ -d ".git" ]; then
+        project_root=${PWD}
+    else
+        git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+        if [ -n "$git_root" ]; then
+            project_root=$git_root
+            if [ -f pyproject.toml ]; then
+                poetry_available="true"
+            elif [ -f requirements.txt ]; then
+                venv_available="true"
+            fi
+        else
+            project_root="${PWD}"
+        fi
+    fi
+
+    if [ "$project_root" != "$PWD" ]; then
+        >&2 echo "cd in $project_root"
+        cd $project_root || return 1
+    fi
+
+    if [ "$poetry_available" = "true" ]; then
+        >&2 echo "run nvim in poetry"
+        export PYTHONPATH=$project_root
+        exec poetry run nvim --luamod-dev "$@"
+    fi
+
+    if [ "$venv_available" = "true" ]; then
+        >&2 echo "run nvim in venv"
+        export PYTHONPATH=$project_root
+        source venv/bin/activate && exec nvim --luamod-dev "$@"
+    fi
+
+    >&2 echo "run nvim with no fancy"
+    exec nvim --luamod-dev "$@"
+}
+
+main "$@"
+
+# vim: ft=bash :

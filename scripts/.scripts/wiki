@@ -1,0 +1,5 @@
+#!/usr/bin/sh
+
+cd ~/vimwiki || exit 1
+export NVIM_PROFILES="coding"
+exec nvim --luamod-dev index.wiki

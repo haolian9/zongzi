@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+
+# 设定：
+# * 排除 umbra-trash/ 内的视频文件
+# * resume 模式下，排除已看的视频，也会排除 loves/ 内的视频文件
+
+import logging
+import os.path
+import random
+import subprocess
+import time
+from argparse import ArgumentParser, ArgumentTypeError
+from pathlib import Path
+
+default_roots = (
+    "/oasis/sync",
+    "/oasis/smaug/final",
+    "/srv/media/av",
+    "/av",
+)
+default_roots = tuple([Path(p) for p in default_roots])
+
+
+class History:
+    file = Path.home().joinpath(".local/state/scripts-pp.hist")
+
+    @classmethod
+    def loads(cls):
+        try:
+            fp = cls.file.open("rb")
+        except FileNotFoundError:
+            return
+
+        with fp:
+            for line in fp:
+                # len('\n')
+                yield line[:-1].decode()
+
+    @classmethod
+    def append(cls, record: str):
+        with cls.file.open("a") as fp:
+            fp.write(f"{record}\n")
+
+    # todo: distinct/unique with necessary flock
+
+
+def iter_roots(roots: list[Path]):
+
+    def video_files(root: Path):
+        for ent in root.iterdir():
+            if ent.is_dir():
+                if "umbra-trash" in ent.name:
+                    continue
+                yield from video_files(ent)
+                continue
+            if ent.suffix == ".mp4":
+                yield str(ent)
+
+    for root in roots:
+        yield from video_files(root)
+
+
+def play(vids: list[str], parallel: int):
+    it = iter(vids)
+
+    count, total = 0, len(vids)
+    procs: list[tuple[subprocess.Popen, str]] = []
+    FAST, SLOW = 0 / 1000, 250 / 1000
+    interval = FAST
+
+    while True:
+        time.sleep(interval)
+
+        if len(procs) >= parallel:
+            alives = []
+            for record in procs:
+                proc, vid = record
+                if proc.poll() is None:
+                    alives.append(record)
+                else:
+                    # record history only when it's been played
+                    # but not when this script being killed
+                    History.append(vid)
+            procs = alives
+            interval = FAST if len(procs) < parallel else SLOW
+            continue
+
+        try:
+            vid = next(it)
+        except StopIteration:
+            return
+        assert vid is not None
+        count = count + 1
+        if not os.path.exists(vid):
+            return
+
+        fpath = str(vid)
+        cmd = ("/usr/bin/mpv", "--x11-name=mpv-grid", "--mute=yes", "--no-terminal", fpath)
+        proc = subprocess.Popen(cmd, stdin=None, stdout=None, stderr=None, close_fds=True)
+        procs.append((proc, fpath))
+        logging.info("%s/%s %s", count, total, fpath)
+
+
+def parse_args():
+
+    # stole from https://stackoverflow.com/a/43357954
+    def str2bool(s: str):
+        assert isinstance(s, str)
+        if s.lower() in ("1", "yes"):
+            return True
+        if s.lower() in ("0", "no"):
+            return False
+        raise ArgumentTypeError("not a valid bool value")
+
+    par = ArgumentParser()
+    par.add_argument("-n", "--parallel", type=int, default=9)
+    par.add_argument("--resume", type=str2bool, nargs="?", const=True, default=False)
+    par.add_argument("--shuffle", type=str2bool, nargs="?", const=True, default=False)
+    par.add_argument("--fc2", type=str2bool, nargs="?", const=True, default=False)
+    par.add_argument("roots", nargs="*", default=default_roots)
+    return par.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    roots = [Path(p).resolve() for p in args.roots]
+    roots = [p for p in roots if p.is_dir()]
+    logging.info("roots: %s", roots)
+
+    vids = [vid for vid in iter_roots(roots)]
+    if args.shuffle:
+        random.shuffle(vids)
+    if not args.fc2:
+        vids = [vid for vid in vids if "/fc2ppv-" not in vid]
+    if args.resume:
+        hist = set(History.loads())
+        vids = [vid for vid in vids if vid not in hist and "/loves/" not in vid]
+    logging.info("total: %d", len(vids))
+
+    try:
+        play(vids, args.parallel)
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y%m%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()
+
+# vim: ft=python

@@ -1,0 +1,48 @@
+
+snippet shebang
+#!/usr/bin/env bash
+
+$1
+endsnippet
+
+snippet confirm
+while true; do
+    if [[ "${0}" =~ "zsh" ]]; then
+        read "?${prompt}" token
+    else
+        read -p "${prompt}" token
+    fi
+    case $token in
+        [Yy]* )
+            echo 'Installing ...'
+            break;;
+        [Nn]* )
+            echo 'Exiting ...'
+            exit;;
+        * )
+            echo "Please make your choice!"
+    esac
+done
+endsnippet
+
+snippet logger
+logger() {
+    >&2 echo "[$(date '+%H:%M:%S')] $*"
+}
+endsnippet
+
+snippet root
+readonly ROOT="$(dirname $(realpath "\$0"))"
+endsnippet
+
+snippet disable
+# shellcheck disable=SC${1}
+endsnippet
+
+snippet switch
+case "$line" in
+    *)
+        :
+        ;;
+esac
+endsnippet

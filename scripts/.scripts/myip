@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+
+import contextlib
+import functools
+import ipaddress
+import logging
+import socket
+import subprocess
+import time
+from argparse import ArgumentParser
+from ipaddress import AddressValueError, IPv4Address
+
+
+def determine_public_ip():
+    def _get_via_socket(domain: str, port=80):
+        request = "\r\n".join(
+            (
+                "GET / HTTP/1.1",
+                f"Host: {domain}",
+                "User-Agent: curl",
+                "Accept: */*",
+                "Connection: close",
+                "\r\n",
+            )
+        ).encode("ascii")
+
+        response = bytearray()
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        with contextlib.closing(s):
+            s.connect((domain, port))
+            s.sendall(request)
+
+            while True:
+                chunk = s.recv(128)
+                if chunk == b"":
+                    break
+                response.extend(chunk)
+
+        if not response.startswith(b"HTTP/1.1 200 OK\r\n"):
+            raise RuntimeError("response not ok: {!r}".format(response))
+
+        body_begin = response.rfind(b"\r\n\r\n")
+
+        if body_begin < 0:
+            raise RuntimeError("has no body in response: {!r}".format(response))
+
+        return response[body_begin + 4 :]
+
+    def _get_via_curl(domain, port=80):
+        """
+        since get_via_socket did not expect proxy
+        """
+
+        command = ["curl", "--silent", f"{domain}:{port}"]
+        cp = subprocess.run(command, check=True, stdout=subprocess.PIPE)
+
+        return cp.stdout
+
+    # possible services:
+    # * ifconfig.io
+    # * ip.me
+    # * checkip.amazonaws.com
+    # * ip.fm
+    # * ip.im
+    body = _get_via_curl("checkip.amazonaws.com")
+
+    return IPv4Address(body.strip().decode())
+
+
+def determine_host_ip():
+    def _extract_gateway(route: str):
+        _ip = route[len("default via ") : route.find(" ", len("default via "))]
+        try:
+            return IPv4Address(_ip)
+        except AddressValueError:
+            raise RuntimeError("failed to extract ipv4 address from default route")
+
+    def _extract_network(line: str):
+        _ip = line[: line.find(" ")]
+        try:
+            return ipaddress.ip_network(_ip)
+        except AddressValueError:
+            raise RuntimeError("failed to extract ipv4 network from route")
+
+    def _extract_src(line: str):
+        start = line.find(" src ") + 4 + 1
+        end = line.find(" ", start)
+
+        try:
+            return IPv4Address(line[start:end])
+        except AddressValueError:
+            logging.debug("ip: %s", line[start:end])
+            raise RuntimeError("failed to find host ip")
+
+    cp = subprocess.run(["ip", "route", "show", "all"], stdout=subprocess.PIPE, check=True)
+    out = cp.stdout.decode().splitlines()
+
+    for ix, line in enumerate(out):
+        if line.startswith("default via"):
+            gateway = _extract_gateway(line)
+            del out[ix]
+            break
+    else:
+        raise RuntimeError("failed to find default route")
+
+    for line in out:
+        network = _extract_network(line)
+        if gateway in network:
+            possible_route = line
+            break
+    else:
+        raise RuntimeError("failed to find out route corresponding to gateway")
+
+    return _extract_src(possible_route)
+
+
+def parse_args():
+    ap = ArgumentParser()
+    ap.add_argument("-p", "--public", action="store_true")
+    ap.add_argument("-w", "--wait", action="store_true", help="keep retrying to get ip successfully")
+
+    return ap.parse_args()
+
+
+def wait_until_get(fn):
+    remain = 100
+
+    while remain > 0:
+        try:
+            return fn()
+        except RuntimeError as err:
+            remain -= 1
+            logging.warning(repr(err))
+            time.sleep(0.5)
+
+    raise RuntimeError("wait timeouted")
+
+
+def main():
+    args = parse_args()
+
+    if args.public:
+        fn = determine_public_ip
+    else:
+        fn = determine_host_ip
+
+    if args.wait:
+        fn = functools.partial(wait_until_get, fn)
+
+    try:
+        host_ip = fn()
+    except RuntimeError as e:
+        raise SystemExit(repr(e))
+    else:
+        print(host_ip)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()
+
+# vim: ft=python :

@@ -1,0 +1,5 @@
+#!/usr/bin/sh
+
+exec ni \
+    +'lua require"cricket.ui.ctl".win1000()' \
+    +'lua require"cricket.ui.gallery".split("right")'

@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+
+"""
+build steps:
+* see: https://github.com/vifm/vifm/blob/master/INSTALL
+* check if there are automake and autoconf
+    * aclocal
+* ./configure --prefix=/opt/vifm-master --disable-desktop-files --without-X11 --without-dyn-X11 --disable-remote-cmds
+* make
+* install
+
+workflow:
+* 在 github 上跟踪 upstream 并合并到 fork branch=hal
+* 克隆到本地
+* optional: 更新本地代码版本、切换到 hal 分支
+* build
+"""
+
+import logging
+import os
+import subprocess
+from argparse import ArgumentParser
+from pathlib import Path
+
+
+class Facts:
+    branch = "hal"
+    repo_uri = "git@github.com:haolian9/vifm.git"
+    src_dir = Path("/srv/playground/vifm")
+    install_dir = Path(f"/opt/vifm-{branch}")
+    bin_file = Path.home().joinpath("bin/vifm")
+
+
+def prepare_source_code(need_update: bool):
+    def _cur_branch():
+        cp = subprocess.run(["git", "branch", "--show-current"], cwd=Facts.src_dir, check=True, stdout=subprocess.PIPE)
+        return cp.stdout.rstrip().decode()
+
+    if not Facts.src_dir.exists():
+        subprocess.run(["git", "clone", "--branch", Facts.branch, Facts.repo_uri, Facts.src_dir], check=True)
+        return
+
+    cur_br = _cur_branch()
+    if cur_br != Facts.branch:
+        raise SystemExit("currently in branch %s, expects %s", cur_br, Facts.branch)
+
+    if need_update:
+        subprocess.run(["git", "pull", "--ff-only", "origin", Facts.branch], cwd=Facts.src_dir, check=True)
+
+
+def build(need_configure: bool):
+    def nproc():
+        nproc = os.cpu_count()
+        return str(1 if nproc is None else nproc)
+
+    Facts.install_dir.mkdir(exist_ok=True)
+    if need_configure:
+        subprocess.run(["./configure", f"--prefix={Facts.install_dir}", "--disable-desktop-files", "--without-X11", "--without-dyn-X11", "--disable-remote-cmds"], cwd=Facts.src_dir, check=True)
+    subprocess.run(["make", "-j", nproc()], cwd=Facts.src_dir, check=True)
+    subprocess.run(["make", "install"], cwd=Facts.src_dir, check=True)
+
+
+def link():
+    bin_src = Facts.install_dir.joinpath("bin/vifm")
+    assert bin_src.exists()
+    Facts.bin_file.unlink(missing_ok=True)
+    Facts.bin_file.symlink_to(bin_src, False)
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--update", action="store_true", help="need to update the source code")
+    parser.add_argument("--configure", action="store_true", help="need to ./configure")
+    parser.add_argument("--branch", type=str, default=Facts.branch)
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    Facts.branch = args.branch
+
+    logging.info(
+        "facts:\n* uri=%s\n* repo=%s\n* branch=%s\n* install=%s\n* bin=%s",
+        Facts.repo_uri,
+        Facts.src_dir,
+        Facts.branch,
+        Facts.install_dir,
+        Facts.bin_file,
+    )
+
+    prepare_source_code(args.update)
+    build(args.configure)
+    link()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()
+
+# vim: ft=python :

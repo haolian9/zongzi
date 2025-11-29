@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+
+"""
+you can find more cursor theme in [pling](https://www.pling.com)
+
+ref: https://wiki.archlinux.org/title/Cursor_themes
+"""
+
+# pylint: disable=bare-except
+
+import argparse
+import logging
+import shutil
+import subprocess
+import sys
+import tempfile
+import typing as T
+from io import BytesIO
+from pathlib import Path
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    op = parser.add_subparsers(dest="op", required=True)
+    op.add_parser("list", help="show all available cursor themes")
+    op.add_parser("current", help="show current cursor theme")
+
+    change = op.add_parser("change", help="use another cursor theme")
+    change.add_argument("src", help="current cursor theme")
+    change.add_argument("dest", help="dest cursor theme")
+
+    install = op.add_parser("install")
+    install.add_argument("files", type=str, nargs="+")
+
+    return parser.parse_args()
+
+
+class Facts:
+    home = Path.home()
+    theme_dirs = [
+        Path("/usr/share/icons"),
+        home.joinpath(".local/share/icons"),
+    ]
+    conf_files = [
+        (b"Inherits=", home.joinpath(".icons/default/index.theme")),
+        (b"Xcursor.theme:", home.joinpath(".Xresources")),
+        (
+            b"gtk-cursor-theme-name=",
+            home.joinpath(".config/gtk-3.0/settings.ini"),
+        ),
+    ]
+    default_cursors_dir = home.joinpath(".icons", "default", "cursors")
+    user_cursors_dir = home.joinpath(".local/share/icons")
+
+
+def _find_themes_in_dir(root: Path) -> T.Iterable[Path]:
+    for dir in root.iterdir():
+        if not dir.is_dir():
+            continue
+
+        for subdir in dir.iterdir():
+            if not subdir.is_dir():
+                continue
+            if subdir.name == "cursors":
+                yield dir
+                break
+
+
+def _list_cursor_themes() -> T.Iterable[Path]:
+
+    for dir in Facts.theme_dirs:
+        yield from _find_themes_in_dir(dir)
+
+
+def _change_to_cursor_theme(src: str, dest: str):
+    def _change_in_conf(prefix: bytes, file: Path):
+        with open(file, "rb") as fp:
+            content = bytearray(fp.read())
+
+        # TODO@haoliang no need to read out all content
+        start = 0
+        line: bytes
+        for line in BytesIO(content):
+            if not line.startswith(prefix):
+                start += len(line)
+                continue
+
+            if not line.rstrip().endswith(src.encode()):
+                raise RuntimeError(f"{line!r} != {src}")
+
+            dest_line = b"".join((prefix, dest.encode(), b"\n"))
+            content[start : start + len(line)] = dest_line
+            break
+        else:
+            raise RuntimeError(f"can not found prefix in {file}")
+
+        backup = file.parent.joinpath(file.name + ".bak")
+        file.replace(backup)
+        logging.debug("created backup %s", backup)
+
+        try:
+            with open(file, "wb") as fp:
+                fp.write(content)
+        except:  # noqa: ignore
+            backup.replace(file)
+            logging.debug("recovered %s with backup", file)
+        else:
+            logging.debug("updated cursor theme in %s", file)
+
+    def _ln_to_default_dir():
+        for path in _list_cursor_themes():
+            if path.name != dest:
+                continue
+            dest_cursors_dir = path.joinpath("cursors")
+            break
+        else:
+            raise RuntimeError(f"invalid dest cursortheme {dest}")
+
+        Facts.default_cursors_dir.unlink(missing_ok=True)
+        Facts.default_cursors_dir.symlink_to(dest_cursors_dir)
+        logging.debug("linked dest to default cursors")
+
+    _ln_to_default_dir()
+
+    for prefix, conf in Facts.conf_files:
+        _change_in_conf(prefix, conf)
+
+
+def _current_cursor_theme():
+    def _theme_in_conf(prefix: bytes, file: Path) -> str:
+        with open(file, "rb") as fp:
+            for line in fp:
+                if not line.startswith(prefix):
+                    continue
+
+                theme = line[len(prefix) :].strip().decode()
+                break
+            else:
+                raise SystemExit(f"can not found theme in {file}")
+
+        return theme
+
+    themes = []
+    same_theme_in_conf = True
+    for idx, (prefix, conf) in enumerate(Facts.conf_files):
+        themes.append((conf, _theme_in_conf(prefix, conf)))
+        if themes[0][1] != themes[idx][1]:
+            same_theme_in_conf = False
+
+    default_cursors_dir = Facts.default_cursors_dir.resolve().parent
+    default_theme = default_cursors_dir.name
+
+    if same_theme_in_conf and themes[0][1] == default_theme:
+        print(themes[0][1])
+        return
+
+    for conf, theme in themes:
+        print("* {: <25} {}".format(theme, conf), file=sys.stderr)
+
+    print("* {} -> {}".format(Facts.default_cursors_dir, default_cursors_dir))
+
+    raise SystemExit("incorrect cursor theme setting")
+
+
+def _install_cursor_theme_from_files(files: T.List[str]):
+    Facts.user_cursors_dir.mkdir(exist_ok=True)
+
+    def _install_one(tarfile: Path):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            subprocess.run(["tar", "xfv", tarfile], cwd=tmpdir, check=True)
+
+            for path in _find_themes_in_dir(Path(tmpdir)):
+                logging.debug(
+                    "found theme %s, moving to %s", path, Facts.user_cursors_dir
+                )
+                shutil.move(path, Facts.user_cursors_dir)
+
+    for file in files:
+        realpath = Path(file).resolve()
+        assert realpath.exists()
+        _install_one(realpath)
+
+
+def main():
+    args = parse_args()
+
+    if args.op == "list":
+        for path in _list_cursor_themes():
+            print("* {: <25} {!s}".format(path.name, path))
+    elif args.op == "change":
+        _change_to_cursor_theme(args.src, args.dest)
+    elif args.op == "current":
+        _current_cursor_theme()
+    elif args.op == "install":
+        _install_cursor_theme_from_files(args.files)
+    else:
+        raise NotImplementedError("unknown op")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()

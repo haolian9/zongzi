@@ -1,0 +1,21 @@
+bar {
+    # display mode
+    mode hide
+    hidden_state hide
+    modifier $mod
+    status_command i3status
+    workspace_buttons yes
+    # tray_output none
+    verbose yes
+
+    font pango:SauceCodePro Nerd Font Mono Semi-Bold 18
+
+    colors {
+        background "#fdf6e3"
+        statusline "#000000"
+        #color-class       border  backgr. text
+        focused_workspace  "#000000" "#f1c40f" "#000000"
+        active_workspace   "#000000" "#fdf6e3" "#000000"
+        inactive_workspace "#000000" "#fdf6e3" "#000000"
+    }
+}

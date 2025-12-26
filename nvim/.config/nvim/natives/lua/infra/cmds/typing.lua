@@ -1,0 +1,107 @@
+---@alias infra.cmds.CompFn fun(prompt: ""|string, line: string, cursor: 1|integer): string[]
+
+---:h command-complete
+---@alias infra.cmds.CompLit
+---| '"arglist"'       # file names in argument list
+---| '"augroup"'       # autocmd groups
+---| '"buffer"'        # buffer names
+---| '"behave"'        # :behave suboptions
+---| '"color"'         # color schemes
+---| '"command"'       # Ex command (and arguments)
+---| '"compiler"'      # compilers
+---| '"dir"'           # directory names
+---| '"environment"'   # environment variable names
+---| '"event"'         # autocommand events
+---| '"expression"'    # Vim expression
+---| '"file"'          # file and directory names
+---| '"file_in_path"'  # file and directory names in |'path'|
+---| '"filetype"'      # filetype names |'filetype'|
+---| '"function"'      # function name
+---| '"help"'          # help subjects
+---| '"highlight"'     # highlight groups
+---| '"history"'       # :history suboptions
+---| '"locale"'        # locale names (as output of locale -a)
+---| '"lua"'           # Lua expression
+---| '"mapclear"'      # buffer argument
+---| '"mapping"'       # mapping name
+---| '"menu"'          # menus
+---| '"messages"'      # |:messages| suboptions
+---| '"option"'        # options
+---| '"packadd"'       # optional package |pack-add| names
+---| '"shellcmd"'      # Shell command
+---| '"sign"'          # |:sign| suboptions
+---| '"syntax"'        # syntax file names |'syntax'|
+---| '"syntime"'       # |:syntime| suboptions
+---| '"tag"'           # tags
+---| '"tag_listfiles"' # tags, file names are shown when CTRL-D is hit
+---| '"user"'          # user names
+---| '"var"'           # user variables
+
+---:h command-addr
+---@alias infra.cmds.Addr
+---| '"lines"'          # Range of lines (this is the default for -range)
+---| '"arguments"'      # Range for arguments
+---| '"buffers"'        # Range for buffers (also not loaded buffers)
+---| '"loaded_buffers"' # Range for loaded buffers
+---| '"windows"'        # Range for windows
+---| '"tabs"'           # Range for tab pages
+---| '"quickfix"'       # Range for quickfix entries
+---| '"other"'          # Other kind of range; can use ".", "$" and "%" as with "lines" (this is the default for -count)
+
+---:h command-attributes
+---@class infra.cmds.Attrs
+---
+---@field nargs 0|1|'*'|'?'|'+'
+---@field complete? infra.cmds.CompLit|infra.cmds.CompFn
+---
+---@field range? true|'%'|integer
+---@field count? true|integer
+---@field addr? infra.cmds.Addr
+---
+---The command can take a ! modifier (like :q or :w)
+---@field bang? true
+---The command can be followed by a "|" and another command. A "|" inside the command argument is not allowed then. Also checks for a " to start a comment.
+---@field bar? true
+---The first argument to the command can be an optional register name (like :del, :put, :yank).
+---@field register? true
+---:h command-buffer
+---The command will only be available in the current buffer
+---@field buffer? true|integer
+---Do not use the location of where the user command was defined for verbose messages, use the location of where the user command was invoked.
+---@field keepscript? true
+
+---@class infra.cmds.ArgsSmods
+---@field browse        boolean
+---@field confirm       boolean
+---@field emsg_silent   boolean
+---@field hide          boolean
+---@field horizontal    boolean
+---@field keepalt       boolean
+---@field keepjumps     boolean
+---@field keepmarks     boolean
+---@field keeppatterns  boolean
+---@field lockmarks     boolean
+---@field noautocmd     boolean
+---@field noswapfile    boolean
+---@field sandbox       boolean
+---@field silent        boolean
+---@field split         ""|string
+---@field tab           -1|integer
+---@field unsilent      boolean
+---@field verbose       -1|integer
+---@field vertical      boolean
+
+---:h nvim_create_user_command
+---@class infra.cmds.Args
+---@field name  string               @Command name
+---@field args  ""|string            @The args passed to the command, if any
+---@field fargs string[]
+---@field bang  boolean              @the bang modifier
+---@field count integer              @Any count supplied
+---@field line1 integer              @The starting line of the command range
+---@field line2 integer              @The final line of the command range
+---@field mods  ""|string            @Command modifiers, if any
+---@field range integer              @The number of items in the command range: 0, 1, or 2
+---@field reg   ""|string            @The optional register, if specified
+---@field smod  infra.cmds.ArgsSmods @Command modifiers in a structured format. Has the same structure as the "mods" key of |nvim_parse_cmd()|
+

@@ -1,0 +1,94 @@
+
+snippet main
+const std = @import("std");
+const print = std.debug.print;
+const assert = std.debug.assert;
+
+pub fn main() !void {
+    print("hello world!\n", .{});
+    $0
+}
+endsnippet
+
+snippet test
+test "$1" {
+    try testing.expect(true);
+    $0
+}
+endsnippet
+
+snippet print
+print("$1\n", .{$2});
+endsnippet
+
+snippet for
+for ($1) |${2:x}${3:, ix}| {
+    $0
+}
+endsnippet
+
+snippet std
+const std = @import("std");
+endsnippet
+
+snippet assert
+const assert = std.debug.assert;
+endsnippet
+
+snippet Self
+const Self = @This();
+endsnippet
+
+snippet method
+fn ${1:foo}(self: Self) void {
+    $0
+}
+endsnippet
+
+snippet _
+_ = $1;
+endsnippet
+
+snippet if
+if ($1) {
+    $0
+}
+endsnippet
+
+snippet iftrue
+if (true) {
+    $0
+}
+endsnippet
+
+snippet gpa
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+defer assert(!gpa.deinit());
+
+const allocator = gpa.allocator();
+$0
+endsnippet
+
+snippet testing
+const testing = std.testing;
+$0
+endsnippet
+
+snippet format
+pub fn format(self: ${1:Self}, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+    _ = self;
+    _ = fmt;
+    _ = options ;
+    _ = writer;
+    try std.fmt.format(writer, "{any}", .{self});
+    $0
+}
+endsnippet
+
+snippet nofmt
+// zig fmt: off
+endsnippet
+
+snippet catchswitch
+catch |${1:err}| switch($1) {$0};
+endsnippet

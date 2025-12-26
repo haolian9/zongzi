@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+
+import logging
+import os
+import subprocess
+from argparse import ArgumentParser
+
+# see .config/mpv/input.conf
+opkey = {"pause": "ctrl+1", "unpause": "ctrl+2", "mute": "ctrl+3", "unmute": "ctrl+4"}
+opkey["play"] = opkey["unpause"]
+opkey["sound"] = opkey["unmute"]
+opkey["quit"] = "q"
+opkey["space"] = "space"
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("op", choices=opkey.keys())
+    parser.add_argument("--globally", "-g", action="store_true")
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    cmd = ["xdotool", "search"]
+
+    if not args.globally:
+        cp = subprocess.run(("xdotool", "get_desktop"), check=True, capture_output=True)
+        desktop = cp.stdout.rstrip(b"\n").decode()
+        cmd.extend(("--desktop", desktop))
+
+    cmd.extend(("--class", "mpv"))
+    cmd.extend(("key", "--window", "%@"))
+
+    try:
+        key = opkey[args.op]
+    except KeyError:
+        raise RuntimeError("unknown op")
+    else:
+        cmd.append(key)
+
+    logging.info("%s", " ".join(cmd))
+    os.execvp(cmd[0], cmd)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="{asctime} {message}",
+    )
+    main()
+
+# vim: ft=python

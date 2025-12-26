@@ -1,0 +1,27 @@
+{
+    detail = "int",
+    documentation = {
+        kind = "plaintext",
+        value = "From <stdio.h>\nWrite formatted output to stdout.\nThis function is a possible cancellation point and therefore not marked with __THROW."
+    },
+    filterText = "printf",
+    insertText = "printf",
+    insertTextFormat = 1,
+    kind = 3,
+    label = " printf(const char *restrict format, ...)",
+    score = 1.5648535490036,
+    sortText = "4037b2e1printf",
+    textEdit = {
+        newText = "printf",
+        range = {
+            ["end"] = {
+                character = 7,
+                line = 4
+            },
+            start = {
+                character = 2,
+                line = 4
+            }
+        }
+    }
+}

@@ -1,0 +1,29 @@
+configuration {
+    modi: "run";
+    font: "Monego 14";
+    display-run: "run";
+
+    sort: true;
+    sorting-method: "levenshtein";
+    matching: "fuzzy";
+
+    // keyboard
+
+    kb-remove-to-sol: "";
+    kb-clear-line: "Control+u";
+    kb-remove-word-back: "Control+w";
+
+    kb-remove-to-eol: "";
+    kb-accept-entry: "Return,KP_Enter";
+    kb-row-up: "Control+p,Control+k";
+    kb-row-down: "Control+n,Control+j";
+    kb-row-select: "Control+m,Control+i";
+
+}
+
+// created via `rofi -dump-theme`
+@import "themes/default.rasi"
+
+// tweak of default theme
+// it seems rofi will merge rather than overwrite config items
+@import "themes/default_tweak.rasi"

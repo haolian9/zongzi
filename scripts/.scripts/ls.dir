@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+#
+# list dot files in specific or current directory
+#
+
+ROOT="${1:-$(pwd)}"
+
+find "$ROOT" -maxdepth 1 -mindepth 1 -type d -name '.*' -exec basename {} \;

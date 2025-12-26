@@ -1,0 +1,25 @@
+# see: /etc/dunst/dunstrc
+# see: man 5 dunst
+
+[global]
+
+    ### Display ###
+    follow = keyboard
+
+    ### Geometry ###
+    frame_width = 2
+    frame_color = "#ff0000"
+
+    ### Text ###
+    font = Monego 12
+    line_height = 3
+
+    ### Icons ###
+    max_icon_size = 32
+
+[urgency_normal]
+    background = "#fdf6e3"
+    foreground = "#000000"
+    timeout = 10
+
+# vim: ft=cfg

@@ -1,0 +1,186 @@
+
+# fn {{{
+snippet fn
+local function ${1:foo}()
+  ${0}
+end
+endsnippet
+
+snippet mfn
+function M.${1:foo}()
+  $0
+end
+endsnippet
+
+snippet f
+function() ${0} end
+endsnippet
+
+snippet {visual}method
+function {visual}:${1:foo}()
+  $0
+end
+endsnippet
+
+snippet {visual}function
+function {visual}.${1:foo}()
+  $0
+end
+endsnippet
+
+snippet M
+local M = {}
+
+$0
+
+return M
+endsnippet
+#}}}
+
+# condition {{{
+snippet if
+if ${1:true} then
+  $0
+end
+endsnippet
+
+snippet elif
+elseif ${1:true} then
+  $0
+endsnippet
+#}}}
+
+# loop {{{
+snippet range
+for i = 1, ${1:3} do
+  $0
+end
+endsnippet
+
+snippet ipairs
+for _, ${2:val} in ipairs(${1:list}) do
+  ${0}
+end
+endsnippet
+
+snippet pairs
+for key, val in pairs(${1:dict}) do
+  ${0}
+end
+endsnippet
+
+snippet iter
+for ${1:el} in ${2:iter} do
+  $0
+end
+endsnippet
+#}}}
+
+# anotations {{{
+snippet ret
+---@return ${1:?string}
+endsnippet
+
+snippet nofmt
+--stylua: ignore
+endsnippet
+
+snippet fmtoff
+--stylua: ignore start
+endsnippet
+
+snippet fmton
+--stylua: ignore end
+endsnippet
+
+snippet nodig
+---@diagnostic disable: $0
+endsnippet
+
+snippet dict
+---@type {[string]:${1:boolean}}
+endsnippet
+
+snippet class
+---@class $1
+---@field $2
+---@field
+endsnippet
+
+#}}}
+
+# assignment {{{
+snippet _
+local _ = $1
+endsnippet
+
+snippet {visual}++
+{visual} = {visual} + 1
+endsnippet
+
+snippet {visual}--
+{visual} = {visual} - 1
+endsnippet
+
+#}}}
+
+snippet blk
+do
+  $0
+end
+endsnippet
+
+# my conventions {{{
+snippet jelly
+local jelly = require("infra.jellyfish")("$0", "debug")
+endsnippet
+
+snippet log
+local logging = require("infra.logging")
+
+local log = logging.newlogger("$0", "debug")
+endsnippet
+
+snippet ni
+local ni = require("infra.ni")
+endsnippet
+
+snippet api
+local api = vim.api
+endsnippet
+
+snippet bufnr
+local bufnr = ni.get_current_buf()
+endsnippet
+
+snippet winbuf
+local bufnr = ni.win_get_buf(winid)
+endsnippet
+
+snippet winid
+local winid = ni.get_current_win()
+endsnippet
+
+snippet millet
+-- millet: ${0:luajit %:p}
+endsnippet
+
+snippet dig
+local dig = vim.diagnostic
+endsnippet
+
+snippet uv
+local uv = vim.uv
+endsnippet
+
+snippet g
+local g = require("infra.G")("$0")
+endsnippet
+
+snippet bufopen
+bufopen(${1:open_mode}, ${2:bufnr})
+endsnippet
+
+#}}}
+
+# vim:fen:fdm=marker

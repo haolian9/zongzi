@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+
+# NB
+# * suppose remote named `origin`
+# * suppose remote branch named `origin/$local_branch`
+
+remote=origin
+branch=''
+
+branch=$(git rev-parse --abbrev-ref HEAD) || {
+    >&2 echo "can not determine current branch"
+    exit 1
+}
+
+if [ "$branch" = "HEAD" ]; then
+    >&2 echo "currently in 'detached HEAD' state, can not be fastforwarded"
+    exit 1
+fi
+
+echo "working on branch ${branch}, fetching updates from remote/${remote} "
+
+git fetch $remote "$branch" || {
+    >&2 echo "failed to fetch latest updates"
+    exit 1
+}
+
+git merge --ff-only "$remote/${branch}"
+
+# vim: ft=bash

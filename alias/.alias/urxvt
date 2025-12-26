@@ -1,0 +1,6 @@
+#!/bin/sh
+
+export SHELL=/usr/bin/fish
+export BGMODE=dark
+
+exec /usr/bin/urxvt "$@"

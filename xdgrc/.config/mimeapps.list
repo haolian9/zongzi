@@ -1,0 +1,21 @@
+# ref: https://wiki.archlinux.org/title/XDG_MIME_Applications#Format
+# `*.desktop` can be found in /usr/share/applications/, ~/.local/share/applications/
+
+[Added Associations]
+text/csv=nvim.desktop;chromium.desktop;
+
+[Default Applications]
+
+# default video player
+video/mp4=mpv.desktop
+video/x-matroska=mpv.desktop
+
+# default bittorrent client
+application/x-bittorrent=deluge.desktop
+
+# default browser
+text/html=vivaldi-stable.desktop
+x-scheme-handler/http=vivaldi-stable.desktop
+x-scheme-handler/https=vivaldi-stable.desktop
+x-scheme-handler/about=vivaldi-stable.desktop
+x-scheme-handler/unknown=vivaldi-stable.desktop

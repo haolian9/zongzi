@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+#
+# select a tmux session with fzf
+#
+
+choice=$(tmux list-session -F '#{session_name}' | fzf) || exit 1
+
+if [ -z "$TMUX" ]; then
+    exec tmux attach-session -t "$choice"
+else
+    exec tmux switch-client -t "$choice"
+fi

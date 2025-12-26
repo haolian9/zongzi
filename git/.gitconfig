@@ -1,0 +1,4 @@
+[include]
+    path = ~/.config/git/main
+    path = ~/.config/git/delta
+    path = ~/.config/git/gh

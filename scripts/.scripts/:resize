@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+
+interactive() {
+    while read -r -s -n 1 op; do
+        case $op in
+            h)
+                tmux resize-pane -L 10
+                ;;
+            j)
+                tmux resize-pane -D 5
+                ;;
+            k)
+                tmux resize-pane -U 5
+                ;;
+            l)
+                tmux resize-pane -R 10
+                ;;
+            q|$'\e')
+                break
+                ;;
+            *)
+                >&2 echo "unsupported $op"
+                ;;
+        esac
+    done
+}
+
+oneshot() {
+    # support `tmux command-prompt -i`
+    case "$1" in
+        *h)
+            tmux resize-pane -L 10
+            ;;
+        *j)
+            tmux resize-pane -D 5
+            ;;
+        *k)
+            tmux resize-pane -U 5
+            ;;
+        *l)
+            tmux resize-pane -R 10
+            ;;
+        *=|*)
+            ;;
+    esac
+}
+
+
+case "$1" in
+    -i)
+        interactive
+        ;;
+    *)
+        oneshot "$@"
+        ;;
+esac

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# enum: dark, light
+theme=dark
+
+export GLFW_IM_MODULE=ibus # necessary for fcitx
+export SHELL=/usr/bin/fish
+export BGMODE=$theme
+
+exec /usr/bin/kitty "$@"

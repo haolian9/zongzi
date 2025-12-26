@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+lib=$HOME/wallpaper
+
+if [ ! -d "$lib" ]; then
+    >&2 echo "${lib} not exists"
+    exit 1
+fi
+
+lucky=$(find "$lib" -type f | shuf | head -n 1)
+
+if [ -z "$lucky" ]; then
+    >&2 echo "no wallpaper found"
+    exit 1
+fi
+
+hsetroot -cover "$lucky"

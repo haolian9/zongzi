@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+
+"""
+ref: https://wiki.archlinux.org/index.php/SSHFS#Unmounting
+"""
+
+import subprocess
+from argparse import ArgumentParser
+from contextlib import contextmanager
+from subprocess import CalledProcessError
+from typing import Callable, Iterable
+
+
+class Facts:
+    # fmt: off
+    mounts = {
+        "eugene-oasis":  ("haoliang@eugene:/oasis/smaug",         "/mnt/eugene-oasis"),
+        "bottom-nebula": ("haoliang@rockbottom:/nebula/smaug",    "/mnt/bottom-nebula"),
+        #
+        "d1wd1":         ("haoliang@rockbottom:/mnt/d1wd1",       "/mnt/d1wd1"),
+        "m1wd1":         ("haoliang@rockbottom:/mnt/m1wd1",       "/mnt/m1wd1"),
+        "u4wd1":         ("haoliang@rockbottom:/mnt/u4wd1",       "/mnt/u4wd1"),
+        "a4wd1":         ("haoliang@rockbottom:/mnt/a4wd1",       "/mnt/a4wd1"),
+        "a12wd1":        ("haoliang@rockbottom:/mnt/a12wd1",      "/mnt/a12wd1"),
+        "a8wd1":         ("haoliang@rockbottom:/mnt/a8wd1",       "/mnt/a8wd1"),
+        #
+        "music":         ("haoliang@eugene:/home/haoliang/music", "/mnt/music"),
+        #
+        "films":         ("haoliang@moria:/oasis/films",          "/mnt/films"),
+    }
+    # fmt: on
+
+
+@contextmanager
+def as_sysexit(exc=(CalledProcessError,)):
+    try:
+        yield
+    except exc as e:
+        raise SystemExit(repr(e))
+
+
+def cmd_mount(src: str, dest: str, writable: bool):
+    mode = "rw" if writable else "ro"
+
+    command = ["sshfs", src, dest]
+
+    # ref:
+    # * https://wiki.archlinux.org/title/SSHFS#On_demand
+    # * man 1 sshfs
+    options = ["Compression=no", mode, "reconnect"]
+    for o in options:
+        command.extend(("-o", o))
+
+    with as_sysexit():
+        subprocess.run(command, check=True)
+
+
+def cmd_status():
+    command = ["mount", "-l", "-t", "fuse.sshfs"]
+
+    with as_sysexit():
+        subprocess.run(command, check=True)
+
+
+def cmd_umount(mount_point: str):
+    command = ["fusermount3", "-u", mount_point]
+
+    with as_sysexit():
+        subprocess.run(command, check=True)
+
+
+def parse_args(args=None):
+    parser = ArgumentParser()
+    op = parser.add_subparsers(dest="op", required=False)
+
+    mount = op.add_parser("mount")
+    mount.add_argument("-o", "--read-only", action="store_true")
+    mount_choices = list(Facts.mounts.keys())
+    mount_choices.append("all")
+    mount.add_argument("source", choices=mount_choices)
+
+    umount = op.add_parser("umount")
+    umount.add_argument("source", choices=mount_choices)
+
+    op.add_parser("status")
+
+    return parser.parse_args(args)
+
+
+def tolerant_batch(g: Iterable[Callable[[], None]]):
+    def process() -> Iterable[SystemExit]:
+        for f in g:
+            try:
+                f()
+            except SystemExit as e:
+                yield e
+
+    errors = [e.args for e in process()]
+
+    if errors:
+        raise SystemExit(errors)
+
+
+def main():
+    args = parse_args()
+
+    if args.op == "mount":
+        writable = not args.read_only
+        try:
+            src, mountpoint = Facts.mounts[args.source]
+        except KeyError:
+            if args.source == "all":
+                tolerant_batch(lambda: cmd_mount(src, mountpoint, writable) for _, (src, mountpoint) in Facts.mounts.items())
+        else:
+            cmd_mount(src, mountpoint, writable)
+    elif args.op == "umount":
+        try:
+            _, mountpoint = Facts.mounts[args.source]
+        except KeyError:
+            if args.source == "all":
+                tolerant_batch(lambda: cmd_umount(mountpoint) for _, (_, mountpoint) in Facts.mounts.items())
+        else:
+            cmd_umount(mountpoint)
+    else:
+        cmd_status()
+
+
+if __name__ == "__main__":
+    main()
+
+# vim: ft=python :

@@ -1,0 +1,133 @@
+" ref: /usr/share/vifm/vifmrc
+
+if $BGMODE == 'dark'
+    colorscheme boneyard
+else
+    colorscheme doodlebob
+endif
+
+" options "{{
+" to use <c-i> for history forwarding
+" but imcompatible with reveal.nvim lhs <space>.
+"set cpoptions-=t
+set vicmd=ni
+set syscalls
+set iooptions=fastfilecloning
+set history=100
+set nofollowlinks
+set fastrun
+set sortnumbers
+set undolevels=10
+set vimhelp
+set iec
+set shell=/usr/bin/sh
+set tuioptions='p'
+set wildmenu
+set wildstyle=popup
+set suggestoptions=normal,visual,view,otherpane,keys,marks,registers
+set ignorecase
+set smartcase
+set nohlsearch
+set incsearch
+set statusline=" %o %A %u:%g %= %s %d "
+set vifminfo=dhistory,savedirs,chistory,state,tui,phistory,dirstack,tabs
+set relativenumber
+set viewcolumns=-{name}..,6{size}
+set sort=-mtime
+set sortorder=descending
+set dotdirs=
+set mouse=n
+
+" Don't do too many requests to slow file systems
+set slowfs=curlftpfs
+
+" Format for displaying time in file list. For example:
+" TIME_STAMP_FORMAT=%m/%d-%H:%M
+" See man date or man strftime for details.
+set timefmt=%y-%m-%d\ %H:%M
+
+" trash, please!
+set trash
+" must relative to the mount point to avoid copying
+" %r=stat -c %m, %u=id -u
+set trashdir=%r/.vifm-trash,%r/.vifm-trash-%u
+set confirm=permdelete
+
+set title
+" "}}
+
+" maps "{{
+nnoremap S :sort<cr>
+
+nnoremap w :view<cr>
+vnoremap w :view<cr>gv
+
+nnoremap o :!tmux splitw nvim %f<cr>
+nnoremap O :!tmux neww nvim %f<cr>
+
+nnoremap yd :!echo -n %d | xsel --clipboard --input %i<cr>
+nnoremap yf :!echo -n %c:p | xsel --clipboard --input %i<cr>
+
+nnoremap x  :!mav.py %c:p %D %S 2>&1<cr>
+nnoremap gr :!rename.py %c:p %S 2>&1<cr>
+
+" "}}
+
+" commands "{{
+command! df df -h %m 2> /dev/null
+command! zip zip -r %c.zip %f
+command! unzip unzip %c
+command! untar tar xf %c
+
+command! mkcd :mkdir %a | cd %a
+command! tab :tabnew %d
+
+" compare: a and b
+command! ab :tabnew | compare byname withicase listdups
+" compare: not (a and b)
+command! noab :tabnew | compare byname withicase listunique
+" "}}
+
+" handlers "{{
+filextype {*.pdf},<application/pdf>
+        \ zathura %c &,
+        \ vivaldi %c &,
+        \ firefox %c &,
+
+filetype {*.wav,*.mp3,*.flac,*.m4a,*.wma,*.ape,*.ac3,*.og[agx],*.aac},<audio/*>
+       \ mpv %f &>/dev/null &,
+       \ ffplay -nodisp -autoexit %c,
+
+fileviewer {*.wav,*.mp3,*.flac,*.m4a,*.wma,*.ape,*.ac3,*.og[agx],*.aac},<audio/*>
+         \ ffprobe -hide_banner -pretty %c 2>&1,
+
+filextype {*.avi,*.mp4,*.wmv,*.dat,*.3gp,*.mkv,*.mpg,*.mpeg,*.mts,*.flv,*.mov,*.webm,*.ts,*.mts,*.m4v},<video/*>
+        \ playvideo.py %c:p &>/dev/null &,
+        \ mpv %f &>/dev/null &,
+
+filextype {*.html,*.htm},<text/html>
+        \ vivaldi %f &,
+        \ firefox %f &,
+
+filetype  {*.o},<application/x-object>               nm %f | less
+filetype  <text/troff>                               man ./%c
+filextype {*.bmp,*.jpg,*.jpeg,*.png,*.gif},<image/*> sxiv %f,
+filetype  *.md5                                      md5sum -c %f %S,
+filetype  *.sha1                                     sha1sum -c %f %S
+filetype  *.sha256                                   sha256sum -c %f %S
+filetype  *.sha512                                   sha512sum -c %f %S
+filetype  {*.asc},<application/pgp-signature>        gpg --verify %c
+filextype {*.torrent},<application/x-bittorrent>     qbittorrent %f
+filetype  *.ssh                                      FUSE_MOUNT2|sshfs %PARAM %DESTINATION_DIR %FOREGROUND
+filetype  *.m3u8                                     mpv %f &>/dev/null &
+filetype  *.epub                                     zathura %f &>/dev/null &
+
+fileviewer *.zip                                7z l %c
+fileviewer *.tgz,*.tar.gz                       tar -tzf %c
+fileviewer *.tar.bz2,*.tbz2                     tar -tjf %c
+fileviewer *.tar.xz,*.txz                       tar -tJf %c
+fileviewer {*.tar},<application/x-tar>          tar -tf %c
+fileviewer {*.7z},<application/x-7z-compressed> 7z l %c
+" "}}
+
+" vim: ft=vifm:fen:fdm=marker:fmr="{{,"}}:cms="\ %s

@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+
+import datetime
+import logging
+from argparse import ArgumentParser
+from collections import defaultdict
+from pathlib import Path
+from typing import Callable
+
+
+class Strategy:
+    @classmethod
+    def dispatch(cls, strategy: str):
+        lookup = {"day": cls.day, "month": cls.month, "code": cls.code, "series": cls.series}
+
+        try:
+            return lookup[strategy]
+        except KeyError:
+            raise SystemExit("unexpected strategy")
+
+    @classmethod
+    def day(cls, file: Path) -> str:
+        stat = file.stat()
+        mtime = datetime.datetime.fromtimestamp(stat.st_mtime)
+
+        return mtime.strftime("%y%m%d")
+
+    @classmethod
+    def month(cls, file: Path) -> str:
+        stat = file.stat()
+        mtime = datetime.datetime.fromtimestamp(stat.st_mtime)
+
+        return mtime.strftime("%y%m")
+
+    @classmethod
+    def code(cls, file: Path) -> str:
+        parts = file.stem.lower().split("-")
+        assert 2 <= len(parts) <= 4, "too few/many parts for a code"
+
+        if parts[0] in ("zh", "cn", "en"):
+            parts.pop(0)
+
+        series = parts[0]
+
+        try:
+            int(parts[1])
+        except ValueError:
+            raise SystemExit(f"invalid no parts for a code: {file}")
+        else:
+            # keeps possible padding zero "006"
+            no = parts[1]
+
+        return f"{series}-{no}"
+
+    @classmethod
+    def series(cls, file: Path) -> str:
+        parts = file.stem.lower().split("-")
+        assert 2 <= len(parts) <= 4, f"too few/many parts for a code: {file}"
+
+        if parts[0] in ("zh", "cn", "en"):
+            parts.pop(0)
+
+        series = parts[0]
+
+        try:
+            int(parts[1])
+        except ValueError:
+            raise SystemExit(f"invalid no parts for a code: {file}")
+
+        return series
+
+
+def parse_args():
+    parser = ArgumentParser(description="fold files into dirs by strategy")
+    parser.add_argument("root", nargs="?", default=".")
+    parser.add_argument("-n", "--dryrun", action="store_true")
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-d", "--by-day", action="store_true")
+    group.add_argument("-m", "--by-month", action="store_true")
+    group.add_argument("-c", "--by-code", action="store_true")
+    group.add_argument("-s", "--by-series", action="store_true")
+
+    return parser.parse_args()
+
+
+def group_files(root: Path, directory: Callable[[Path], str]) -> dict[str, list[Path]]:
+    grouped = defaultdict(list)
+
+    for file in root.iterdir():
+        if file.is_file():
+            grouped[directory(file)].append(file)
+
+    return grouped
+
+
+def main():
+    args = parse_args()
+
+    root = Path(args.root).resolve()
+    assert root.exists()
+    logging.info("root %s", root)
+
+    if args.by_day:
+        strategy = "day"
+    elif args.by_month:
+        strategy = "month"
+    elif args.by_code:
+        strategy = "code"
+    elif args.by_series:
+        strategy = "series"
+    else:
+        assert("unreachable")
+
+    grouped = group_files(root, Strategy.dispatch(strategy))
+
+    dryrun = args.dryrun
+
+    for directory, files in grouped.items():
+        directory = root.joinpath(directory)
+
+        if not dryrun:
+            directory.mkdir(mode=0o755, exist_ok=True)
+
+        logging.info("directory %s", directory)
+
+        for file in files:
+            dest = directory.joinpath(file.name)
+
+            if not dryrun:
+                if dest.exists():
+                    logging.warning(f"dest file already exists, {dest}")
+                    continue
+                else:
+                    file.rename(dest)
+
+
+            logging.info("%s* %s", " " * 2, file.name)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level="DEBUG",
+        style="{",
+        datefmt="%H:%M:%S",
+        format="{asctime} {message}",
+    )
+
+    main()
+
+# vim: ft=python :

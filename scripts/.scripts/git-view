@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+#
+# git subcommand: view
+#
+# ref: https://github.com/git/git/blob/master/Documentation/howto/new-command.txt
+#
+
+exec nvim +"lua require'digits.cmds.log'(nil, 200)"

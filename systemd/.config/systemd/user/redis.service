@@ -1,0 +1,15 @@
+# see also /usr/lib/systemd/system/redis.service
+
+[Unit]
+Description=Advanced key-value store
+
+[Service]
+Type=notify
+# $XDG_CONFIG_HOME
+ExecStart=/usr/bin/redis-server /home/haoliang/.config/redis.conf --supervised systemd --daemonize no
+
+TimeoutStartSec=infinity
+TimeoutStopSec=infinity
+
+[Install]
+WantedBy=default.target

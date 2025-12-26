@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+#
+# why
+#
+# in centos, system wide default pip is python2 version, it always sucks.
+#
+
+verbose_exec() {
+    >&2 echo "$@"
+    exec "$@"
+}
+
+main() {
+    if [ "$1" = "install" ]; then
+        echo "$@" | grep -- '--user' || {
+            shift
+            set -- 'install' '--user' "$@"
+        }
+    fi
+
+    verbose_exec python3 -m pip "$@"
+}
+
+main "$@"

@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+#
+# git subcommand: vi
+#
+# ref: https://github.com/git/git/blob/master/Documentation/howto/new-command.txt
+#
+
+exec vi +"lua require'digits.cmds.status'.open('inplace')"

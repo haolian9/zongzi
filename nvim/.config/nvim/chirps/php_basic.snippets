@@ -1,0 +1,132 @@
+
+#{{{ class
+snippet class "Class declaration template" b
+/**
+ * ${1:`!p snip.rv=snip.fn.split('.')[0]`} class file.
+ * @Author ${2:`!v g:snips_author`}
+ * @Date `date +'%d.%m.%Y %R'`
+ */
+class $1 ${2:extends ${3:\yii\base\Model}}
+{$0
+}
+endsnippet
+#}}}
+#{{{ trait
+snippet trait
+/**
+ * ${1:`!p snip.rv=snip.fn.split('.')[0]`} trait file.
+ * @Author ${2:`!v g:snips_author`}
+ * @Date `date +'%d.%m.%Y %R'`
+ */
+trait $1
+{$0
+}
+endsnippet
+#}}}
+#{{{ classmodel
+snippet classmodel
+/**
+ * ${1:`!p snip.rv=snip.fn.split('.')[0]`} class file.
+ * @Author ${2:`!v g:snips_author`}
+ * @Date `date +'%d.%m.%Y %R'`
+ */
+class $1 extends \\${3:common}\models\\$1
+{$0
+}
+endsnippet
+#}}}
+#{{{ ns
+snippet ns
+namespace `!v join(split(expand('%:p'), '/')[-3:-2], '\')`;
+$2
+endsnippet
+#}}}
+#{{{ utf8header
+snippet utf8header
+header("Content-type: text/html; charset=utf-8");
+endsnippet
+#}}}
+#{{{ pub
+snippet pub
+public function ${1:index}()
+{
+    $2
+}
+endsnippet
+#}}}
+#{{{ pubs
+snippet pubs
+public static function ${1:index}()
+{
+    $2
+}
+endsnippet
+#}}}
+#{{{ puba
+snippet puba
+public function action${1:Index}()
+{
+    $2
+}
+endsnippet
+#}}}
+#{{{ pro
+snippet pro
+protected function ${1:index}()
+{
+    $2
+}
+endsnippet
+#}}}
+#{{{ pros
+snippet pros
+protected static function ${1:index}()
+{
+    $2
+}
+endsnippet
+#}}}
+#{{{ pri
+snippet pri
+private function ${1:index}()
+{
+    $2
+}
+endsnippet
+#}}}
+#{{{ pris
+snippet pris
+private static function ${1:index}()
+{
+    $2
+}
+endsnippet
+#}}}
+
+#{{{ main
+snippet main
+<?php
+
+function main(): void {
+    echo "hello world!\n";
+    $0
+}
+
+main();
+endsnippet
+#}}}
+#{{{ type
+snippet type
+/* @var ${1:int} \$${2:number} */
+endsnippet
+#}}}
+#{{{ fn
+snippet fn
+function ${1:foo}(${2:string \$str}) : ${3:void} {
+	$0
+}
+endsnippet
+#}}}
+
+
+# vim:fen:fdm=marker

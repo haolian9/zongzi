@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+# remote_from.pub -- local --> remote_to.authorized_keys
+
+logger() {
+    >&2 echo "[$(date '+%H:%M:%S')] $*"
+}
+
+get_authorized_keys() {
+    local remote=${1:?requires remote}
+
+    local keyfile='~/.ssh/authorized_keys'
+
+    ssh $remote test -f $keyfile || {
+        echo
+        return
+    }
+
+    ssh $remote cat $keyfile
+}
+
+get_pubkey() {
+    local remote=${1:?requires remote}
+
+    local pubkey='~/.ssh/id_rsa.pub'
+
+    ssh $remote test -f $pubkey || {
+        logger "$remote did not have $pubkey"
+        return 1
+    }
+    ssh $remote cat $pubkey
+}
+
+store_pubkey() {
+    local remote=${1:?requires remote}
+
+    local ssh_dir='~/.ssh'
+    local keyfile=$ssh_dir/authorized_keys
+
+    ssh $remote test -d $ssh_dir || ssh $remote mkdir $ssh_dir || {
+        logger "failed to create ssh dir: $ssh_dir"
+        return 1
+    }
+
+    while read -r -t 20 pubkey; do
+        get_authorized_keys $remote | grep -F "$pubkey" &>/dev/null && {
+            logger "pubkey was already existed"
+            continue
+        }
+        echo $pubkey | ssh $remote sh -c "cat >> $keyfile"
+    done
+}
+
+post_check() {
+    >&2 echo "TBD"
+    return 1
+
+    local from=${1:?requires from}
+    local to=${2:?requires}
+
+    # todo: to which configurated on host machine ~/.ssh/config, did not exist on from's ~/.ssh/config
+
+    ssh $from ssh -o "StrictHostKeyChecking no" $to true
+}
+
+main() {
+
+    local from=${1:?requires from}
+    local to=${2:?requires}
+
+    {
+        get_pubkey $from || return 1
+    } | {
+        store_pubkey $to || return 1
+    }
+
+}
+
+main "$@"

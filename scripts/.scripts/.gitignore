@@ -1,0 +1,10 @@
+# vim
+*.un~
+.*.un~
+*.vim
+*.swp
+.netrwhist
+tags
+
+__pycache__/
+.mypy_cache/

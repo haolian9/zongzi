@@ -1,0 +1,35 @@
+hi clear
+
+hi Win        ctermfg=7  ctermbg=0 cterm=none
+hi OtherWin   ctermfg=7  ctermbg=0 cterm=none
+
+hi TopLine    ctermfg=7  ctermbg=0 cterm=none
+hi TopLineSel ctermfg=7  ctermbg=0 cterm=bold
+
+hi TabLine    ctermfg=7  ctermbg=0 cterm=none
+hi TabLineSel ctermfg=7  ctermbg=0 cterm=bold
+
+hi JobLine    ctermfg=7  ctermbg=0  cterm=none
+hi StatusLine ctermfg=7  ctermbg=0 cterm=none
+hi Border     ctermfg=7  ctermbg=0 cterm=none
+
+hi CurrLine   ctermfg=15 ctermbg=1  cterm=bold
+hi OtherLine  ctermfg=7  ctermbg=0  cterm=bold
+hi LineNr     ctermfg=7  ctermbg=0 cterm=none
+
+hi Selected   ctermfg=5  ctermbg=0 cterm=none
+
+hi SuggestBox ctermfg=7  ctermbg=0 cterm=none
+hi WildMenu   ctermfg=7  ctermbg=0 cterm=none
+
+hi CmdLine    ctermfg=7  ctermbg=0 cterm=none
+hi ErrorMsg   ctermfg=1  ctermbg=0 cterm=none
+
+hi Directory  ctermfg=7  ctermbg=0 cterm=none
+hi Link       ctermfg=7  ctermbg=0 cterm=none
+hi BrokenLink ctermfg=7  ctermbg=0 cterm=none
+hi Socket     ctermfg=7  ctermbg=0 cterm=none
+hi Device     ctermfg=7  ctermbg=0 cterm=none
+hi Fifo       ctermfg=7  ctermbg=0 cterm=none
+hi Executable ctermfg=7  ctermbg=0 cterm=none
+

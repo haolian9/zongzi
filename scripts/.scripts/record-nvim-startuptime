@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+import datetime
+import subprocess
+from pathlib import Path
+
+# root=~/tmp/nvim-startuptime/
+# mkdir -p $root
+# cd $root
+# vi --startuptime "$(date +'%Y-%m-%d_%H.%M.%s')"
+
+
+def gather_version():
+    cp = subprocess.run(("nvim", "--version"), capture_output=True, check=True)
+    parts = cp.stdout.split(sep=b"\n", maxsplit=1)
+    p0 = parts[0]
+    assert p0.startswith(b"NVIM v0.")
+    return p0[len(b"NVIM ") :].decode()
+
+
+def main():
+    root = Path.home().joinpath("tmp", "nvim-startuptime")
+    root.mkdir(parents=True, exist_ok=True)
+
+    ver = gather_version()
+    time = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
+    nowdir = root.joinpath("{}_{}".format(time, ver))
+    nowdir.mkdir(exist_ok=True)
+
+    subprocess.run(("vi", "--startuptime", "vi", "+q"), cwd=nowdir, check=True)
+    subprocess.run(("ni", "--startuptime", "ni", "+q"), cwd=nowdir, check=True)
+
+    print(f"stored at {nowdir}")
+
+
+if __name__ == "__main__":
+    main()
+
+# vim: ft=python :

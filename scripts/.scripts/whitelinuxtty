@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -e
+
+#
+# see
+# * man console_codes
+# * https://wiki.archlinux.org/title/User:Isacdaavid/Linux_Console
+# * http://archive.is/QSYHd
+#
+
+if [ "$TERM" != "linux" ]; then
+    >&2 echo "not in a linux console"
+    exit 1
+fi
+
+# set color palette
+echo -en "\e]P0073642" #black
+echo -en "\e]P8002b36" #darkgrey
+echo -en "\e]P1dc322f" #darkred
+echo -en "\e]P9cb4b16" #red
+echo -en "\e]P2859900" #darkgreen
+echo -en "\e]PA586e75" #green
+echo -en "\e]P3b58900" #brown
+echo -en "\e]PB657b83" #yellow
+echo -en "\e]P4268bd2" #darkblue
+echo -en "\e]PC839496" #blue
+echo -en "\e]P5d33682" #darkmagenta
+echo -en "\e]PD6c71c4" #magenta
+echo -en "\e]P62aa198" #darkcyan
+echo -en "\e]PE93a1a1" #cyan
+echo -en "\e]P7eee8d5" #lightgrey
+echo -en "\e]PFfdf6e3" #white
+
+# change {back,fore}ground
+setterm --background white --foreground black --store
+
+# for background artifacting
+setterm --clear=all

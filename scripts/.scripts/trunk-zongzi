@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+set -e
+
+root=/tmp/zongzi
+upstream="file://$HOME/squidward"
+github=git@github.com:haolian9/zongzi.git
+
+[ -d "$root" ] && rm -rf "$root"
+git clone --single-branch --branch master --depth 1 "$upstream" "$root"
+
+cd "$root"
+rm -rf .git font/.local/share/fonts ssh
+git init
+git remote add github "$github"
+git add .
+git checkout -b master
+git commit -m "fresh copy"
+git push --force github master

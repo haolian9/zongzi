@@ -1,0 +1,76 @@
+snippet print
+fmt.Printf("%#v\n", $1)
+endsnippet
+
+snippet for
+for i := 0; i < ${1:10}; i++ {
+	$0
+}
+endsnippet
+
+snippet range
+for ${1:_}, ${2} := range $3 {
+	$0
+}
+endsnippet
+
+snippet go
+go func() {
+	$0
+}()
+endsnippet
+
+snippet main
+package main
+
+func main() {
+	$0
+}
+endsnippet
+
+snippet defer
+defer func() {
+	$0
+}()
+endsnippet
+
+snippet meth
+func (${1:this}) ${2:funcName}(${3:params}) ${4:returns} {
+	$0
+}
+endsnippet
+
+snippet iferr
+if err != nil {
+	return $1, ${2:err}
+}
+endsnippet
+
+snippet switch
+switch ${1:char} {
+case ${2:'a'}:
+	$0
+default:
+	panic("unreachable")
+}
+endsnippet
+
+snippet fn
+func ${1:foo}(${2:bar uint8}) ${3:bool} {
+	${0:return false}
+}
+endsnippet
+
+snippet dict
+make(map[${1:string}]${2:bool})$0
+endsnippet
+
+snippet list
+make([]${1:string})$0
+endsnippet
+
+snippet struct
+type ${1:Foo} struct {
+	${2:Bar int}
+}
+endsnippet

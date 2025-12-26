@@ -1,0 +1,59 @@
+
+snippet main
+def main():
+    ${0:pass}
+
+if __name__ == '__main__':
+    main()
+endsnippet
+
+snippet fn
+def ${1:bingo}():
+    ${0:pass}
+endsnippet
+
+snippet ignore
+ # type: ignore
+endsnippet
+
+snippet disable
+ # pylint: disable=$0
+endsnippet
+
+snippet T
+import typing as T
+
+$0
+endsnippet
+
+snippet loggingbasicconfig
+logging.basicConfig(
+    level="DEBUG",
+    style="{",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    format="{asctime} {message}",
+)
+endsnippet
+
+snippet postinit
+def __attrs_post_init__(self):
+    pass
+endsnippet
+
+snippet aenter
+async def __aenter__(self):
+    return self
+endsnippet
+
+snippet aexit
+async def __aexit__(self, exc_type, exc, tb):
+    pass
+endsnippet
+
+snippet fmtoff
+# fmt: off
+endsnippet
+
+snippet fmton
+# fmt: on
+endsnippet

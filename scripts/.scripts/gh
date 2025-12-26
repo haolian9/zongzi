@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+
+"""
+see: https://docs.github.com/en/rest?apiVersion=2022-11-28
+"""
+
+
+import os
+import subprocess
+from argparse import ArgumentParser
+
+import requests
+
+
+class facts:
+    _token = ""
+
+    apiver = "2022-11-28"
+
+    @classmethod
+    @property
+    def token(cls):
+        if cls._token == "":
+            cp = subprocess.run(["pass", "github/accesstoken-cli"], check=True, stdout=subprocess.PIPE)
+            stdout = cp.stdout.decode()
+            assert stdout.endswith("\n")
+            cls._token = stdout[:-1]
+
+        return cls._token
+
+
+def parse_args():
+    par = ArgumentParser()
+    subpars = par.add_subparsers(dest="op", required=True)
+
+    loc = subpars.add_parser("loc")
+    loc.add_argument("owner", type=str)
+    loc.add_argument("repo", type=str)
+
+    subpars.add_parser("toc")
+
+    clone = subpars.add_parser("clone")
+    clone.add_argument("repo", type=str, help="an entry in toc")
+
+    return par.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    match args.op:
+        case "loc":
+            # doc: https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repository-languages
+            resp = requests.get(
+                "https://api.github.com/repos/{}/{}/languages".format(args.owner, args.repo),
+                headers={"Accept": "application/vnd.github+json", "Authorization": "Bear {}".format(facts.token), "X-GitHub-Api-Version": facts.apiver},
+            )
+            print(resp.content)
+            if not resp.ok:
+                raise SystemExit(1)
+        case "toc":
+            cp = subprocess.run(
+                ("ssh", "haoliang@eugene", "ls --color=never -d /srv/git/*.git"),
+                check=True,
+                capture_output=True,
+            )
+            for line in cp.stdout.splitlines():
+                assert line.startswith(b"/srv/git/")
+                assert line.endswith(b".git")
+                print("*", (line[len(b"/srv/git/") : -len(b".git")]).decode())
+        case "clone":
+            repo = args.repo
+            uri = "git@eugene:/srv/git/{}".format(repo)
+            cmd = ("git", "clone", uri, repo)
+            print(" ".join(cmd))
+            os.execvp(cmd[0], cmd)
+        case _:
+            raise RuntimeError("unreachable")
+
+
+if __name__ == "__main__":
+    main()
+
+# vim: ft=python :

@@ -1,0 +1,32 @@
+snippet main
+proc main: int =
+  discard
+  $1
+
+
+when isMainModule:
+  quit main()
+endsnippet
+
+snippet func
+func ${1:foo}(${2}) ${3::} =
+  ${4:discard}
+endsnippet
+
+snippet proc
+proc ${1:foo}(${2}) ${3::} =
+  ${4:discard}
+endsnippet
+
+snippet method
+proc ${1:foo}(self: ${2}) ${3::} =
+  ${4:discard}
+endsnippet
+
+snippet pass
+discard
+endsnippet
+
+snippet ...
+discard
+endsnippet

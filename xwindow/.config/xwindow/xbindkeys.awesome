@@ -1,0 +1,5 @@
+"awesome-client 'require[[awful]].tag.viewprev()'"
+    m:0x0 + b:9
+
+"awesome-client 'require[[awful]].tag.viewnext()'"
+    m:0x0 + b:8

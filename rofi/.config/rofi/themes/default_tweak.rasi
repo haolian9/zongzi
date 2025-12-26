@@ -1,0 +1,27 @@
+// ref:
+// * man rofi-theme
+// * https://en.wikipedia.org/wiki/X11_color_names
+
+
+element selected.normal {
+    text-color: white;
+    background-color: cornflowerblue;
+}
+
+window {
+    width: 20%;
+    border: 3;
+    border-color: darkcyan;
+}
+
+entry {
+    text-color: black;
+}
+
+prompt {
+    text-color: gray;
+}
+
+textbox-prompt-colon {
+    text-color: gray;
+}

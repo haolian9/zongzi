@@ -1,0 +1,7 @@
+Xcursor.theme:oreo_spark_red_cursors
+Xcursor.size: 32
+
+! xrdb -load -I$HOME/.config/xresources $HOME/.Xresources
+! #include ".config/xresources/urxvt"
+
+! vim: foldmethod=marker :

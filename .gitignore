@@ -1,0 +1,4 @@
+xwindow/*.bak
+
+.zig-cache/
+zig-out/

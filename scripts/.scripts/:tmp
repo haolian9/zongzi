@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+#
+# run one-shot command in a temporary window
+#
+
+# todo: maintain a variable using tmux {show,set}-env
+
+# @return int
+tmp_count() {
+    echo $RANDOM
+}
+
+logger () {
+    >&2 echo "$*"
+}
+
+# create tmp window with random name
+tmp_create() {
+
+    if [ -z "$*" ]; then
+        >&2 echo "usage: this-script command params ..."
+        return 1
+    fi
+
+    # prevent tmux window exit immediatly by a interactive shell
+    #cmd="echo $*; $*; ${SHELL} -i"
+    #exec tmux new-window -t "$(tmp_name)" "${cmd}"
+
+    exec tmux new-window -t "$(tmp_name)" "$@"
+}
+
+# clean all window has numeric name
+# but keep first (the smallest number) and current window
+tmp_clean() {
+    tmux list-windows \
+        | sed '1d' \
+        | awk '$2 !~ "*$" { print $0 }' \
+        | awk '{ print $1 }' | grep '[0-9]\+' --only-matching \
+        | xargs -I {} tmux kill-window -t {}
+}
+
+case "$1" in
+    --clean|-c)
+        tmp_clean
+        ;;
+    *)
+        tmp_create "$@"
+        ;;
+esac

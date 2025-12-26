@@ -1,0 +1,33 @@
+#!/usr/bin/sh
+
+dirs=$(find $PWD -type d -name zig-cache)
+
+if [ -z "$dirs" ]; then
+    echo "no zig-cache found"
+    exit
+fi
+
+{
+    prompt=$(ansi --red "confirm deleting? ")
+
+    while true; do
+        echo "$dirs"
+        read -p "$prompt" token
+        case $token in
+            [Yy]*)
+                break
+                ;;
+            [Nn]*)
+                echo "canceled"
+                exit
+                ;;
+            *) echo "not a choice"
+        esac
+    done
+}
+
+for dir in $dirs; do
+    rm -rf "$dir" || exit 1
+done
+
+# vim: ft=sh :

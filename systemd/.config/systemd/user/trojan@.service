@@ -1,0 +1,11 @@
+[Unit]
+Description=trojan client daemon
+After=network.target network-online.target nss-lookup.target
+AssertPathExists=%h/.config/trojan/configs/%I
+
+[Service]
+Type=simple
+ExecStart=/opt/trojan/trojan -c %h/.config/trojan/configs/%I
+
+[Install]
+WantedBy=multi-user.target

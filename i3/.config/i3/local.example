@@ -1,0 +1,12 @@
+exec --no-startup-id xbindkeys -f ~/.config/xbindkeys/i3
+exec --no-startup-id fcitx5
+exec --no-startup-id hsetroot -solid '#fdf6e3'
+
+# exec --no-startup-id picom
+# exec --no-startup-id systemctl --user start palantir
+# exec --no-startup-id i3-msg rename workspace 1 to 1:1
+# exec --no-startup-id cbatticon
+# exec --no-startup-id unclutter
+# exec --no-startup-id redshift -l 39.9:116.3
+# exec --no-startup-id libinput-gestures
+# exec --no-startup-id systemctl --user start urxvtd

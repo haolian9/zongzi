@@ -1,0 +1,6 @@
+#!/bin/sh
+
+host="${1:?requires host param}"
+bgmode="${BGMODE:-light}"
+
+exec ssh -t "$host" env BGMODE="$bgmode" fish -l

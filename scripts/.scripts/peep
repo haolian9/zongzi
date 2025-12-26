@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+
+# stolen from /usr/share/nvim/runtime/macros/less.sh
+# with customize options '-R -u NONE'
+
+if test -t 1; then
+  if test $# = 0; then
+    if test -t 0; then
+      echo "Missing filename" 1>&2
+      exit
+    fi
+    nvim -R -u NONE -c 'runtime! macros/less.vim' -c 'color doodlebob' -
+  else
+    nvim -R -u NONE -c 'runtime! macros/less.vim' -c 'color doodlebob' "$@"
+  fi
+else
+  # Output is not a terminal, cat arguments or stdin
+  if test $# = 0; then
+    if test -t 0; then
+      echo "Missing filename" 1>&2
+      exit
+    fi
+    cat
+  else
+    cat "$@"
+  fi
+fi
+
+# vim: ft=bash :

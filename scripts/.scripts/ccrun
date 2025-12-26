@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+# design choices:
+# * only one file each time
+# * last argument is reserved for file
+# * file name ends with .c
+# * output target named as ${stem}.o
+# * use `zig cc` instead of gcc
+#
+# todo:
+# * custom dir to store targets
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+def parse_args():
+    if len(sys.argv) < 2:
+        raise SystemExit("not enough args")
+
+    compargs = sys.argv[1:]
+    file = Path(compargs.pop()).resolve()
+
+    if not file.exists():
+        raise SystemExit(f"{file} not exists")
+
+    return compargs, file
+
+
+def main():
+    compargs, file = parse_args()
+    target = file.parent.joinpath(file.stem)
+
+    subprocess.run(["zig", "cc", "-std=c99", *compargs, "-o", target, file], check=True)
+
+    os.execv(target, [str(target)])
+
+
+if __name__ == "__main__":
+    main()
+
+# vim: ft=python :

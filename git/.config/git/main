@@ -1,0 +1,54 @@
+[core]
+    editor = ni
+
+[init]
+    defaultBranch = master
+
+[user]
+    name  = haoliang
+    email = haoliang0.1.2@gmail.com
+
+[alias]
+    br   = branch
+    co   = checkout
+    ci   = commit
+    st   = status
+    rt   = remote --verbose
+    lg   = log --graph --decorate --all --pretty=format:'%C(red)%h%C(reset) %C(blue)%d%C(reset) %s'
+    df   = diff HEAD --name-only
+    root = rev-parse --show-toplevel
+
+[diff]
+    algorithm = patience
+    colorMoved = default
+
+[color]
+    ui = always
+    grep = always
+    interactive = always
+
+[color "branch"]
+    current = red
+    local   = red
+    remote  = blue
+
+[gui]
+    fontui = -family \"Source Code Pro\" -size -12 -weight normal -slant roman -underline 0 -overstrike 0
+
+[rebase]
+    stat = true
+    autostash = true
+
+[pull]
+    rebase = true
+
+[status]
+    submodulesummary = true
+    short = false
+
+[log]
+    decorate = full
+    date = relative
+
+[stash]
+    showPath = true

@@ -1,0 +1,288 @@
+#!/usr/bin/env python
+
+import argparse
+import contextlib
+import pickle
+import random
+import subprocess
+import typing as T
+from itertools import chain
+from pathlib import Path
+
+
+class facts:  # pylint: disable=invalid-name
+    dbfile = Path.home().joinpath(".cache", "rofi.pyman.db")
+    # provided by python-docs (arch package)
+    mandir = Path("/usr/share/doc/python/html")
+    # will be canceled by `in`
+    pydoc_noises = {
+        # dir
+        "distributing/",
+        "distutils/",
+        "extending/",
+        "install/",
+        "installing/",
+        # keyword
+        "asyncio",
+        "genindex",
+        "whatsnew/2",
+    }
+    appendices = {
+        "neovim/user_manual": "https://neovim.io/doc/user/",
+        "vim/user_manual": "https://vimhelp.org/usr_toc.txt.html",
+        "anyio": "https://anyio.readthedocs.io/en/stable/",
+        "blessed": "https://blessed.readthedocs.io/en/latest/",
+        "lua/index": "https://www.lua.org/manual/5.1/index.html#index",
+        "perf": "http://www.brendangregg.com/perf.html",
+        "trio/core": "https://trio.readthedocs.io/en/stable/reference-core.html",
+        "trio/io": "https://trio.readthedocs.io/en/stable/reference-io.html",
+        "trio/design": "https://trio.readthedocs.io/en/stable/design.html",
+        "i3wm/user-guide": "https://i3wm.org/docs/userguide.html",
+        "i3wm/ipc": "https://i3wm.org/docs/ipc.html",
+        "pylint/options": "http://pylint.pycqa.org/en/latest/technical_reference/features.html",
+        "mozilla/http/headers": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers",
+        "attrs/api": "https://www.attrs.org/en/stable/api.html",
+        "attrs/api/s": "https://www.attrs.org/en/stable/api.html#attr.s",
+        "attrs/api/ib": "https://www.attrs.org/en/stable/api.html#attr.ib",
+        "h11/api": "https://h11.readthedocs.io/en/latest/api.html",
+    }
+
+
+class DB:
+    def __init__(self, records: T.Dict[str, str], diff_from_file: bool):
+        # {term: uri}
+        self._records = records
+
+        self._diff_from_file = diff_from_file
+
+        terms = list(self._records.keys())
+        random.shuffle(terms)
+        self._weighted_terms = {term: 0 for term in terms}
+
+    @property
+    def weighted_terms(self) -> T.List[str]:
+        terms = sorted(self._weighted_terms.items(), key=lambda el: el[1], reverse=True)
+
+        return [term for term, _ in terms]
+
+    def weighten(self, term: str):
+        try:
+            self._weighted_terms[term] += 1
+        except KeyError:
+            pass
+        else:
+            self._diff_from_file = True
+
+    def patch_appendices(self) -> int:
+        """
+        :return: number of newly added records
+        """
+
+        missing = facts.appendices.keys() - self._records.keys()
+        if not missing:
+            return 0
+
+        self._diff_from_file = True
+        self._records.update((term, facts.appendices[term]) for term in missing)
+        self._weighted_terms.update((term, 0) for term in missing)
+
+        return len(missing)
+
+    def uri(self, term: str):
+        """
+        :raise: KeyError
+        """
+        self.weighten(term)
+
+        return self._records[term]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exctype, excval, traceback):
+        if excval is not None:
+            return
+
+        if self._diff_from_file:
+            self._persist()
+
+    def _persist(self):
+        with facts.dbfile.open("wb") as fp:
+            self._diff_from_file = False
+            pickle.dump(self, fp)
+
+    @classmethod
+    def load(cls) -> "DB":
+        try:
+            with facts.dbfile.open("rb") as fp:
+                db = pickle.load(fp)
+        except FileNotFoundError:
+            pydocs = cls._scan_pydocs()
+            appendices = facts.appendices.items()
+
+            db = DB(dict(chain(pydocs, appendices)), diff_from_file=True)
+        else:
+            assert isinstance(db, DB)
+
+        return db
+
+    @classmethod
+    def _scan_pydocs(cls):
+        def _iter(dir: Path):
+            for file in dir.iterdir():
+                basename = file.name
+                if file.is_dir():
+                    if basename.startswith("_"):
+                        continue
+
+                    yield from _iter(file)
+                    continue
+
+                if not basename.endswith(".html"):
+                    continue
+
+                fullname = str(file)
+                for noise in facts.pydoc_noises:
+                    if noise in fullname:
+                        break
+                else:
+                    yield file
+
+        def _route(file: Path) -> str:
+            rel = file.relative_to(facts.mandir)
+            return str(rel)[: -len(".html")]
+
+        return ((_route(file), file) for file in _iter(facts.mandir))
+
+
+@contextlib.contextmanager
+def procerr_as_sysexit():
+    try:
+        yield
+    except subprocess.CalledProcessError as e:
+        # pylint: disable=raise-missing-from
+        raise SystemExit(repr(e))
+
+
+@contextlib.contextmanager
+def procerr_to_rofi():
+    try:
+        yield
+    except subprocess.CalledProcessError as e:
+        msg = ["`{}` returns {}".format(e.cmd, e.returncode)]
+        if e.stderr:
+            msg.append("details:\n{}".format(e.stderr.decode()))
+
+        subprocess.run(["rofi", "-e", "\n".join(msg)], check=False)
+
+        # pylint: disable=raise-missing-from
+        raise SystemExit(1)
+
+
+class Command:
+    @staticmethod
+    def update_appendices_in_db(db: DB):
+        num = db.patch_appendices()
+
+        print(f"added {num} appendices")
+
+    @staticmethod
+    def show_manual(db: DB, terms: list, takecarer):
+
+        command = ["i3-sensible-browser"]
+        for term in terms:
+            try:
+                uri = db.uri(term)
+            except KeyError:
+                continue
+            else:
+                command.append(uri)
+
+        if len(command) == 1:
+            return
+
+        with takecarer():
+            subprocess.run(command, check=True, capture_output=True)
+
+    @staticmethod
+    def rofi(db: DB):
+        options = "\n".join(db.weighted_terms).encode()
+        command = [
+            "rofi",
+            "-dmenu",
+            "-p",
+            "terms",
+            "-i",
+            "-no-custom",
+            "-multi-select",
+            "-async-pre-read",
+            "30",
+            "-window-title",
+            "pyman",
+        ]
+
+        with procerr_as_sysexit():
+            cp = subprocess.run(
+                command,
+                input=options,
+                capture_output=True,
+                check=False,
+            )
+
+        terms = cp.stdout.strip().decode().split()
+        Command.show_manual(db, terms, procerr_to_rofi)
+
+    @staticmethod
+    def fzf(db: DB):
+        options = "\n".join(db.weighted_terms).encode()
+
+        with procerr_as_sysexit():
+            cp = subprocess.run(
+                ["fzf", "--multi", "--cycle"],
+                input=options,
+                stdout=subprocess.PIPE,
+                check=True,
+            )
+
+        terms = cp.stdout.strip().decode().split()
+        Command.show_manual(db, terms, procerr_as_sysexit)
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser()
+    op = parser.add_subparsers(dest="op", required=True)
+    op.add_parser("rofi", help="choose manual term in rofi")
+    op.add_parser("fzf", help="choose manual term in fzf")
+    update = op.add_parser("update", help="update appendices")
+    update.add_argument(
+        "-a", "--all", action="store_true", help="update both basic and appendix parts"
+    )
+    terms = op.add_parser("terms")
+    terms.add_argument("terms", nargs="+")
+
+    return parser.parse_args()
+
+
+def main():
+    args = _parse_args()
+
+    if args.op == "update" and args.all:
+        facts.dbfile.unlink(missing_ok=True)
+
+    with DB.load() as db:
+        if args.op == "update":
+            Command.update_appendices_in_db(db)
+        elif args.op == "terms":
+            Command.show_manual(db, args.terms, procerr_as_sysexit)
+        elif args.op == "rofi":
+            Command.rofi(db)
+        elif args.op == "fzf":
+            Command.fzf(db)
+        else:
+            raise SystemExit("unknown op")
+
+
+if __name__ == "__main__":
+    main()
+
+# vim: ft=python :

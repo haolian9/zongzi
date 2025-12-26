@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+
+# settings
+# * /tmp, /opt, ~/bin
+
+import logging
+import shutil
+import subprocess
+from pathlib import Path
+
+import requests
+
+
+class Filesystem:
+    opt = Path("/opt")
+    tmp = Path("/tmp")
+
+
+def get_latest_version():
+    def load_resp():
+        resp = requests.get("https://github.com/neovim/neovim/releases/tag/nightly")
+        assert resp.status_code == 200, "code={}; headers={}".format(resp.status_code, resp.headers)
+        return resp.content
+
+    resp = load_resp()
+
+    tag_start = resp.find(b"<code>NVIM")
+    tag_stop = resp.find(b"</code>", tag_start)
+    content = resp[tag_start + len(b"<code>") : tag_stop]
+
+    nvim, build_type, luajit = content.strip().split(b"\n", maxsplit=2)
+    assert nvim.startswith(b"NVIM ")
+    assert build_type.startswith(b"Build type: ")
+    assert luajit.startswith(b"LuaJIT ")
+
+    return nvim[len(b"NVIM ") :].decode()
+
+
+def download(optdir: Path):
+    if optdir.exists():
+        return
+
+    tmproot = Filesystem.tmp.joinpath(optdir.name)
+    tmproot.mkdir(exist_ok=True)
+
+    uri = "https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz"
+    subprocess.run(["aria2c", "--continue", "-x", "3", uri], cwd=tmproot, check=True)
+    logging.info("downloaded tar in %s", tmproot)
+
+    tmpdir = tmproot.joinpath("nvim-linux64")
+    if not tmpdir.exists():
+        subprocess.run(["tar", "xf", "nvim-linux64.tar.gz"], cwd=tmproot, check=True)
+
+    shutil.move(tmpdir, optdir)
+    logging.info("placed %s", optdir)
+
+
+def link(optdir: Path):
+    bin = optdir.joinpath("bin", "nvim")
+    assert bin.exists(), f"{bin} should exists"
+    target = Path.home().joinpath("bin", "nvim")
+    logging.info("linking %s to %s", bin, target)
+    target.unlink(missing_ok=True)
+    target.symlink_to(bin, False)
+
+
+def cleanup(optdir: Path):
+    latest = optdir.name
+
+    def _helds():
+        for dir in optdir.parent.iterdir():
+            name = dir.name
+            if not name.startswith("nvim-"):
+                continue
+            if name.startswith("nvim-master"):
+                continue
+            if name == latest:
+                continue
+            _, _, _, number, _ = name.split("-", maxsplit=4)
+            yield int(number), dir
+
+    helds = list(_helds())
+    helds.sort(key=lambda el: el[0], reverse=True)
+    for _, dir in helds[3:]:
+        logging.info("rm old version: %s", dir)
+        shutil.rmtree(dir, ignore_errors=False)
+
+
+def main():
+    version = get_latest_version()
+    logging.info("nvim version: %s", version)
+
+    optdir = Filesystem.opt.joinpath(f"nvim-{version}")
+    download(optdir)
+    link(optdir)
+    cleanup(optdir)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level="DEBUG", style="{", datefmt="%Y-%m-%d %H:%M:%S", format="{asctime} {message}")
+    main()

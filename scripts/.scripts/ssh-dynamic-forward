@@ -1,0 +1,38 @@
+#!/usr/bin/env sh
+
+# notice:
+# since this script will not provide service-killing function,
+# kill it manually
+
+LISTEN_IP=127.0.0.1
+LISTEN_PORT=8123
+
+ssh_bearer=$1
+
+if [ -z "$ssh_bearer" ]; then
+    echo 'usage: this-script string:ssh_bearer:{alias,user@host}'
+    exit 1
+fi
+
+if ss -tln | grep $LISTEN_PORT 1>/dev/null; then
+    kill "$(ss -tlnp | grep $LISTEN_PORT | grep -Po '(?<=pid=)[0-9]+')" || {
+        >&2 echo "can not kill existing proc"
+        exit 2
+    }
+fi
+
+if ssh -f -N -C -D $LISTEN_IP:$LISTEN_PORT "$ssh_bearer"; then
+    cat <<EOF
+ssh-forward started
+use in firefox:
+preferences->network proxy->manual proxy configuration->socks
+->host: $LISTEN_IP
+->port: $LISTEN_PORT
+->socks v4
+EOF
+else
+    >&2 echo "can not start ssh-forward"
+    exit 1
+fi
+
+# vim:ft=sh

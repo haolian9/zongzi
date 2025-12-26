@@ -1,0 +1,15 @@
+#!/bin/sh
+
+#
+# prefer, -S
+# * res:1080 1080p
+# * codec:   better encoding
+# * br:      better bitrate
+#
+# filename length
+# * ext4 filesystem: 255bytes
+# * utf-8: avarage 3bytes
+# * 100
+#
+
+exec /usr/bin/yt-dlp -N 8 --proxy='socks5://127.0.0.1:1080' --trim-filenames 100 -S 'res:1080,codec,br' "$@"

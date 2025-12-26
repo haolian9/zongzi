@@ -1,0 +1,60 @@
+{
+    detail = "func(a ...any) (n int, err error)",
+    documentation = "Scan scans text read from standard input, storing successive\nspace-separated values into successive arguments. Newlines count\nas space. It returns the number of items successfully scanned.\nIf that is less than the number of arguments, err will report why.\n",
+    filterText = "Scan",
+    insertTextFormat = 1,
+    kind = 3,
+    label = "Scan",
+    sortText = "00016",
+    textEdit = { newText = "Scan", range = { ["end"] = { character = 5, line = 16 }, start = { character = 5, line = 16 } } }
+}
+
+{
+    additionalTextEdits = {
+        { newText = '\n\t"fmt"\n\t"math"\n', range = { ["end"] = { character = 8, line = 2 }, start = { character = 8, line = 2 } } },
+        { newText = "", range = { ["end"] = { character = 12, line = 7 }, start = { character = 1, line = 5 } } }
+    },
+    detail = 'func (from "math")',
+    documentation = "",
+    filterText = "Max",
+    insertTextFormat = 1,
+    kind = 3,
+    label = "Max",
+    preselect = true,
+    sortText = "00000",
+    textEdit = { newText = "Max", range = { ["end"] = { character = 7, line = 16 }, start = { character = 6, line = 16 } } }
+}
+
+{
+    detail = "float",
+    documentation = "Mathematical constants.\n",
+    filterText = "E",
+    insertTextFormat = 1,
+    kind = 21,
+    label = "E",
+    sortText = "00014",
+    textEdit = { newText = "E", range = { ["end"] = { character = 6, line = 18 }, start = { character = 6, line = 18 } } }
+}
+
+{
+    detail = "func(x float64, y float64) float64",
+    documentation = "Max returns the larger of x or y.\n\nSpecial cases are:\n\n\tMax(x, +Inf) = Max(+Inf, x) = +Inf\n\tMax(x, NaN) = Max(NaN, x) = NaN\n\tMax(+0, ±0) = Max(±0, +0) = +0\n\tMax(-0, -0) = -0\n\nNote that this differs from the built-in function max when called\nwith NaN and +Inf.\n",
+    filterText = "Max",
+    insertTextFormat = 1,
+    kind = 3,
+    label = "Max",
+    sortText = "00049",
+    textEdit = { newText = "Max", range = { ["end"] = { character = 6, line = 18 }, start = { character = 6, line = 18 } } } 
+}
+
+{
+    detail = "string",
+    documentation = "These are predefined layouts for use in Time.Format and time.Parse.\nThe reference time used in these layouts is the specific time stamp:\n\n\t01/02 03:04:05PM '06 -0700\n\n(January 2, 15:04:05, 2006, in time zone seven hours west of GMT).\nThat value is recorded as the constant named Layout, listed below. As a Unix\ntime, this is 1136239445. Since MST is GMT-0700, the reference would be\nprinted by the Unix date command as:\n\n\tMon Jan 2 15:04:05 MST 2006\n\nIt is a regrettable historic error that the date uses the American convention\nof putting the numerical month before the day.\n\nThe example for Time.Format demonstrates the working of the layout string\nin detail and is a good reference.\n\nNote that the RFC822, RFC850, and RFC1123 formats should be applied\nonly to local times. Applying them to UTC times will use \"UTC\" as the\ntime zone abbreviation, while strictly speaking those RFCs require the\nuse of \"GMT\" in that case.\nIn general RFC1123Z should be used instead of RFC1123 for servers\nthat insist on that format, and RFC3339 should be preferred for new protocols.\nRFC3339, RFC822, RFC822Z, RFC1123, and RFC1123Z are useful for formatting;\nwhen used with time.Parse they do not accept all the time formats\npermitted by the RFCs and they do accept time formats not formally defined.\nThe RFC3339Nano format removes trailing zeros from the seconds field\nand thus may not sort correctly once formatted.\n\nMost programs can use one of the defined constants as the layout passed to\nFormat or Parse. The rest of this comment can be ignored unless you are\ncreating a custom layout string.\n\nTo define your own format, write down what the reference time would look like\nformatted your way; see the values of constants like ANSIC, StampMicro or\nKitchen for examples. The model is to demonstrate what the reference time\nlooks like so that the Format and Parse methods can apply the same\ntransformation to a general time value.\n\nHere is a summary of the components of a layout string. Each element shows by\nexample the formatting of an element of the reference time. Only these values\nare recognized. Text in the layout string that is not recognized as part of\nthe reference time is echoed verbatim during Format and expected to appear\nverbatim in the input to Parse.\n\n\tYear: \"2006\" \"06\"\n\tMonth: \"Jan\" \"January\" \"01\" \"1\"\n\tDay of the week: \"Mon\" \"Monday\"\n\tDay of the month: \"2\" \"_2\" \"02\"\n\tDay of the year: \"__2\" \"002\"\n\tHour: \"15\" \"3\" \"03\" (PM or AM)\n\tMinute: \"4\" \"04\"\n\tSecond: \"5\" \"05\"\n\tAM/PM mark: \"PM\"\n\nNumeric time zone offsets format as follows:\n\n\t\"-0700\"     ±hhmm\n\t\"-07:00\"    ±hh:mm\n\t\"-07\"       ±hh\n\t\"-070000\"   ±hhmmss\n\t\"-07:00:00\" ±hh:mm:ss\n\nReplacing the sign in the format with a Z triggers\nthe ISO 8601 behavior of printing Z instead of an\noffset for the UTC zone. Thus:\n\n\t\"Z0700\"      Z or ±hhmm\n\t\"Z07:00\"     Z or ±hh:mm\n\t\"Z07\"        Z or ±hh\n\t\"Z070000\"    Z or ±hhmmss\n\t\"Z07:00:00\"  Z or ±hh:mm:ss\n\nWithin the format string, the underscores in \"_2\" and \"__2\" represent spaces\nthat may be replaced by digits if the following number has multiple digits,\nfor compatibility with fixed-width Unix time formats. A leading zero represents\na zero-padded value.\n\nThe formats __2 and 002 are space-padded and zero-padded\nthree-character day of year; there is no unpadded day of year format.\n\nA comma or decimal point followed by one or more zeros represents\na fractional second, printed to the given number of decimal places.\nA comma or decimal point followed by one or more nines represents\na fractional second, printed to the given number of decimal places, with\ntrailing zeros removed.\nFor example \"15:04:05,000\" or \"15:04:05.000\" formats or parses with\nmillisecond precision.\n\nSome valid layouts are invalid time values for time.Parse, due to formats\nsuch as _ for space padding and Z for zone information.\n",
+    filterText = "DateTime",
+    insertTextFormat = 1,
+    kind = 21,
+    label = "DateTime",
+    sortText = "00007",
+    textEdit = { newText = "DateTime", range = { ["end"] = { character = 6, line = 20 }, start = { character = 6, line = 20 } } }
+}
+
